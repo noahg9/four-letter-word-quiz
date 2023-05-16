@@ -1,6 +1,5 @@
 #include <button.h>
 #include <avr/io.h>
-#include <usart.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
@@ -15,8 +14,9 @@ int buttonPushed( int button ) {
   if (( PINC & ( 1 << ( PC1 + (button-1) ) )) == 0 )
   {
       printf( " - Button %d pressed!\n", button );
+      return 1;
   }
-  return 0;
+  return;
 }
 
 int buttonReleased( int button ) {
@@ -24,6 +24,7 @@ int buttonReleased( int button ) {
   if ( bit_is_clear( BUTTON_PIN, BUTTON1 ) )
   {
       printf( " - Button %d released!\n", button );
+      return 1;
   }
-  return 0;
+  return ;
 }
