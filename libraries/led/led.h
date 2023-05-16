@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <util/delay.h>
 #include <avr/io.h>
 
@@ -16,4 +17,4 @@ void lightUpAllLeds ();
 
 void lightDownAllLeds ();
 
-void lightToggleOneLed (int lednumber)
+void lightToggleOneLed (int lednumber);

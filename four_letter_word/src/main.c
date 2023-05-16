@@ -4,6 +4,8 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <led.h>
+#include <button.h>
 
 #define BUTTON1_PIN PB2
 #define BUTTON2_PIN PB3

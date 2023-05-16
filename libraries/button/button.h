@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <avr/io.h>
 #include <usart.h>
 #include <util/delay.h>
@@ -8,6 +9,6 @@
 
 void enableButton( int button );
 
-void buttonPushed( int button );
+int buttonPushed( int button );
 
-void buttonReleased( int button );
+int buttonReleased( int button );
