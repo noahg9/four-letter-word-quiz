@@ -2,14 +2,12 @@
 #include <util/delay.h>
 #include <avr/io.h>
 
-void enableOneLed ( int lednumber )
-{
+void enableOneLed ( int lednumber ) {
     if ( lednumber < 0 || lednumber > NUMBER_OF_LEDS-1 ) return;
     DDRB |= ( 1 << ( PB2 + lednumber ));
 }
 
-void enableMultipleLeds ( uint8_t leds )
-{
+void enableMultipleLeds ( uint8_t leds ) {
     DDRB |= leds;
 }
 

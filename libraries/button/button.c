@@ -26,5 +26,5 @@ int buttonReleased( int button ) {
       printf( " - Button %d released!\n", button );
       return 1;
   }
-  return ;
+  return;
 }
