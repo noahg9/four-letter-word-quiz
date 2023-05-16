@@ -4,8 +4,6 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <string.h>
-#include <button.h>
-#include <led.h>
 
 #define BUTTON1_PIN PB2
 #define BUTTON2_PIN PB3
@@ -38,7 +36,6 @@ struct Puzzle* currentPuzzle = NULL;
 unsigned long puzzleStartTime = 0;
 volatile int gameStarted = 0;
 
-int main()
-{
+int main() {
   return 0;
 }
