@@ -9,6 +9,12 @@ const uint8_t SEGMENT_MAP[] = {0xC0, 0xF9, 0xA4, 0xB0, 0x99,
 
 /* Byte maps to select digit 1 to 4 */
 const uint8_t SEGMENT_SELECT[] = {0xF1, 0xF2, 0xF4, 0xF8};
+// In display.c add an array with the 26 letters of
+// the alphabet at the top of the declaration:
+const uint8_t ALPHABET_MAP[] = {0x88, 0x83, 0xC6, 0xA1, 0x86, 0x8E, 0xC2, 0x89, 0xCF, 0xE1, 0x8A, 0xC7, 0xEA, 0xC8, 0xC0, 0x8C, 0x4A, 0xCC, 0x92, 0x87,
+                                0xC1,
+                                0xC1, 0xD5, 0x89, 0x91, 0xA4};
+
 
 void initDisplay() {
   sbi(DDRD, LATCH_DIO);
@@ -73,10 +79,41 @@ void writeNumberAndWait(int number, int delay) {
 }
 
 // Blanks a certain segment. Segment 0 is the leftmost.
-void blankSegment(uint8_t segment)
-{
+void blankSegment(uint8_t segment) {
   cbi(PORTD, LATCH_DIO);
   shift(0xFF, MSBFIRST);
   shift(SEGMENT_SELECT[segment], MSBFIRST);
   sbi(PORTD, LATCH_DIO);
+}
+
+void writeCharToSegment(uint8_t segment, char character) {
+  if (character >= 'a' && character <= 'z') {
+    character -= 32;
+  }
+  uint8_t value = 0;
+  if (character >= 'A' && character <= 'Z') {
+    value = ALPHABET_MAP[character - 'A'];
+  }
+  else {
+    value = SPACE;
+  }
+  cbi(PORTD, LATCH_DIO);
+  shift(value, MSBFIRST);
+  shift(SEGMENT_SELECT[segment], MSBFIRST);
+  sbi(PORTD, LATCH_DIO);
+}
+
+void writeString(char* str) {
+  for(uint8_t i = 0; i < 4 && str[i] != '\0'; i++){
+    writeCharToSegment(i, str[i]);  
+  }
+}
+
+void writeStringAndWait(char* str, int delay) {
+  for (int i = 0; i < delay / 20; i++){
+    for(uint8_t segment = 0; segment < 4 && str[segment] != '\0'; segment++) {
+      writeCharToSegment(segment, str[segment]);
+      _delay_ms(5);
+    }
+  }
 }

@@ -14,8 +14,20 @@
 #define sbi(register, bit) (register |= _BV(bit))
 #define cbi(register, bit) (register &= ~_BV(bit))
 
+// Define a macro SPACE with the value 0xFF at the top of your code.
+#define SPACE 0xFF
+
+const uint8_t SEGMENT_MAP[];
+const uint8_t SEGMENT_SELECT[];
+const uint8_t ALPHABET_MAP[];
+
 void initDisplay();
 void writeNumberToSegment(uint8_t segment, uint8_t value);
 void writeNumber(int number);
 void writeNumberAndWait(int number, int delay);
 void blankSegment(uint8_t segment);
+
+// Expanded library for alphabet on display
+void writeCharToSegment(uint8_t segment, char character);
+void writeString(char* str);
+void writeStringAndWait( char* str, int delay);
