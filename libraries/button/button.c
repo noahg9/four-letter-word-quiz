@@ -10,21 +10,21 @@ void enableButton( int button ) {
 }
 
 int buttonPushed( int button ) {
-  if ( button < 1 || button > 3 ) return;
+  if ( button < 1 || button > 3 ) return 0;
   if (( PINC & ( 1 << ( PC1 + (button-1) ) )) == 0 )
   {
       printf( " - Button %d pressed!\n", button );
       return 1;
   }
-  return;
+  return 0;
 }
 
 int buttonReleased( int button ) {
-  if ( button < 1 || button > 3 ) return;
+  if ( button < 1 || button > 3 ) return 0;
   if ( bit_is_clear( BUTTON_PIN, BUTTON1 ) )
   {
       printf( " - Button %d released!\n", button );
       return 1;
   }
-  return;
+  return 0;
 }
