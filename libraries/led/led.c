@@ -45,3 +45,28 @@ void lightToggleOneLed ( int lednumber ) {
     if ( lednumber < 0 || lednumber > 3 ) return;
     PORTB ^= ( 1 << ( PB2 + lednumber ));
 }
+
+void dimLed(int lednumber, int percentage, int duration) {
+  enableOneLed(lednumber);
+  for (int i = 0; i < duration; i++) {
+      for (int i = 0; i < percentage; i++) {
+        lightUpOneLed(lednumber);
+      }
+      for (int i = 0; i < 100-percentage; i++) {
+        lightDownOneLed(lednumber);
+      }
+    _delay_ms(1);
+  }
+}
+
+void fadeInLed(int led, int duration) {
+  for (int perc = 0; perc <= 100; perc++) {
+    dimLed(led, perc, duration/100);
+  }
+}
+
+void fadeOutLed(int led, int duration) {
+  for (int perc = 100; perc >= 0; perc--) {
+    dimLed(led, perc, duration/100);
+  }
+}
