@@ -50,8 +50,10 @@ int main() {
       catID = 0;
     }
   }
+  int randIndex = rand() % 7;
+  char* secretWord = animalWords[randIndex];
   while (1) {
-    writeString("LION");
+    writeString(secretWord);
   }
   return 0;
 }
