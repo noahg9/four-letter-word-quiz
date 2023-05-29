@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
 #include "usart.h"
 #include "led.h"
 #include "display.h"
@@ -25,15 +24,15 @@ char* wordCategories[4][7] = {
 };
 
 void hideConsonants(const char *secretWord, char *visibleWord) {
-    int length = strlen(secretWord);
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < 4; i++) {
         visibleWord[i] = toupper(secretWord[i]);  // Convert the character to uppercase for case-insensitive comparison
         if (!(visibleWord[i] == 'A' || visibleWord[i] == 'E' || visibleWord[i] == 'I' || visibleWord[i] == 'O' || visibleWord[i] == 'U')) {
             visibleWord[i] = '_';
         }
     }
-    visibleWord[length] = '\0';  // Add null terminator to the modified word
+    visibleWord[4] = '\0';  // Add null terminator to the modified word
 }
+
 
 void correctSound() {
   enableBuzzer();
@@ -52,7 +51,7 @@ int main() {
   enableButton(2);
   enableButton(3);
   initDisplay();
-  srand(0);
+  srand(time(NULL));
 
   printf("Welcome to the four-letter word quiz!");
   
@@ -75,12 +74,10 @@ int main() {
   }
   
   char* secretWord = wordCategories[catID][rand() % 7];
-  
-  char visibleWord[5];
-
+  char visibleWord[4];
   hideConsonants(secretWord, visibleWord);
-
-  while (!buttonPushed(1) && !buttonPushed(2) && !buttonPushed(3)) {
+  
+  while (1) {
     writeString(visibleWord);
   }
 
