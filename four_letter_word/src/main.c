@@ -12,12 +12,16 @@
 #include "potentio.h"
 #include "buzzer.h"
 
-char* categories[7] = {"ANML", "HMAN", "CTRY", "THNG"};
-char* words[4][7] = {
-  {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER"},
-  {"HAND", "HEAD", "FOOT", "NOSE", "BACK", "KNEE", "CHIN"},
-  {"IRAN", "PERU", "CUBA", "CHAD", "FIJI", "LAOS", "TOGO"},
-  {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE"}
+char* categories[4] = {"ANML", "HMAN", "CTRY", "THNG"};
+char* words[4][28] = {
+  {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN"
+  "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
+  {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH" 
+  "LIAM", "EMMA", "KATE", "LUNA", "JACK", "OWEN", "JOHN", "LUKE", "ELLA", "LILY", "RYAN", "ADAM", "ANNA", "ELLA"},
+  {"IRAN", "PERU", "CUBA", "CHAD", "FIJI", "LAOS", "TOGO", "IRAQ", "BELG", "ENGL", "IREL", "NETH", "DENM", "SWED",
+  "NORW", "FINL", "GERM", "FRAN", "SPAI", "PORT", "ITAL", "MEXI", "CANA", "POLA", "BRAZ", "ARGE", "JAPA", "PHIL"},
+  {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE", "RING", "COMB", "SOAP", "PIPE", "VASE", "COIN", "FLAG"
+  "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"}
 };
 
 void hideConsonants(const char *secret_word, char *visible_word) 
