@@ -12,16 +12,6 @@
 #include "potentio.h"
 #include "buzzer.h"
 
-#define LED_PORT PORTB
-#define BUTTON_PORT PORTC
-#define BUTTON_PIN PINC
-#define LED_DDR DDRB
-#define BUTTON_DDR DDRC
-#define BUTTON1 PC1
-#define LED1 PB2
-#define LED2 PB3
-#define __DELAY_BACKWARD_COMPATIBLE__
-
 char* categories[7] = {"ANML", "HMAN", "CTRY", "THNG"};
 char* words[4][7] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER"},
@@ -30,31 +20,41 @@ char* words[4][7] = {
   {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE"}
 };
 
-void hideConsonants(const char *secret_word, char *visible_word) {
-    for (int i = 0; i < 4; i++) {
-        visible_word[i] = secret_word[i];  // Convert the character to uppercase for case-insensitive comparison
-        if (!(visible_word[i] == 'A' || visible_word[i] == 'E' || visible_word[i] == 'I' || visible_word[i] == 'O' || visible_word[i] == 'U')) {
+void hideConsonants(const char *secret_word, char *visible_word) 
+{
+    for (int i = 0; i < 4; i++) 
+    {
+        visible_word[i] = secret_word[i];
+        if (!(visible_word[i] == 'A' || visible_word[i] == 'E' || visible_word[i] == 'I' 
+        || visible_word[i] == 'O' || visible_word[i] == 'U')) 
+        {
             visible_word[i] = '_';
         }
     }
-    visible_word[4] = '\0';  // Add null terminator to the modified word
+    visible_word[4] = '\0';  // Add null terminator
 }
 
-int setIndex(int button, char *visible_word) {
+int setIndex(int button, char *visible_word) 
+{
   int cons_count = 0;
-  for (int i = 0; i < 4; i++) {
-    if (visible_word[i] == '_') {
+  for (int i = 0; i < 4; i++) 
+  {
+    if (visible_word[i] == '_') 
+    {
       cons_count++;
     }
-    if (cons_count == button) {
+    if (cons_count == button) 
+    {
       return i;
     }
   }
   return 4;
 }
 
-void nextChar(int index, char *visible_word) {
-  if (visible_word[index] == '_' || visible_word[index] == 'Z') {
+void nextChar(int index, char *visible_word) 
+{
+  if (visible_word[index] == '_' || visible_word[index] == 'Z') 
+  {
     visible_word[index] = 'A';
   }
   else {
@@ -62,17 +62,20 @@ void nextChar(int index, char *visible_word) {
   }
 }
 
-void correctSound() {
+void correctSound() 
+{
   enableBuzzer();
   playTone(C5, 100);
 }
 
-void incorrectSound() {
+void incorrectSound() 
+{
   enableBuzzer();
   playTone(C5, 100);
 }
 
-int main() {
+int main() 
+{
   initUSART();
   enableButton(1);
   enableButton(2);
@@ -82,20 +85,24 @@ int main() {
 
   printf("Welcome to the four-letter word quiz!");
   
-  while (!buttonPushed(1)) {
+  while (!buttonPushed(1)) 
+  {
     writeString("CAT?");
   }
 
   printf("\n1 - Next category\n2 - Select category \nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG)");
   int cat_id = -1;
 
-  while (!buttonPushed(2)) {
+  while (!buttonPushed(2)) 
+  {
     cat_id++;
     _delay_ms(500);
-    while (!buttonPushed(1) && !buttonPushed(2)) {
+    while (!buttonPushed(1) && !buttonPushed(2)) 
+    {
       writeString(categories[cat_id]);
     }
-    if (cat_id == 4 && !buttonPushed(2)) {
+    if (cat_id == 4 && !buttonPushed(2)) 
+    {
       cat_id = 0;
     }
   }
@@ -110,20 +117,27 @@ int main() {
   
   _delay_ms(500);
   
-  while (1) {
+  while (1) 
+  {
+    
     writeString(visible_word);
-    if (buttonPushed(1)) {
+
+    if (buttonPushed(1)) 
+    {
       _delay_ms(500);
       nextChar(button1_index, visible_word);
     }
-    if (buttonPushed(2) && button2_index != 4) {
+    if (buttonPushed(2) && button2_index != 4) 
+    {
       _delay_ms(500);
       nextChar(button2_index, visible_word);
     }
-    if (buttonPushed(3) && button3_index != 4) {
+    if (buttonPushed(3) && button3_index != 4) 
+    {
       _delay_ms(500);
       nextChar(button3_index, visible_word);
     }
+
   }
 
   return 0;
