@@ -12,6 +12,14 @@
 #include "potentio.h"
 #include "buzzer.h"
 
+#define LED_PORT PORTB
+#define BUTTON_PORT PORTC
+#define BUTTON_PIN PINC
+#define LED_DDR DDRB
+#define BUTTON_DDR DDRC
+#define BUTTON1 PC1
+#define LED1 PB2
+#define LED2 PB3
 #define __DELAY_BACKWARD_COMPATIBLE__
 
 char* categories[7] = {"ANML", "HMAN", "CTRY", "THNG"};
@@ -42,7 +50,7 @@ int setIndex(int button, char *visible_word) {
       return i;
     }
   }
-  return 0;
+  return 4;
 }
 
 void nextChar(int index, char *visible_word) {
@@ -100,17 +108,19 @@ int main() {
   int button2_index = setIndex(2, visible_word);
   int button3_index = setIndex(3, visible_word);
   
+  _delay_ms(500);
+  
   while (1) {
     writeString(visible_word);
     if (buttonPushed(1)) {
       _delay_ms(500);
       nextChar(button1_index, visible_word);
     }
-    if (buttonPushed(2)) {
+    if (buttonPushed(2) && button2_index != 4) {
       _delay_ms(500);
       nextChar(button2_index, visible_word);
     }
-    if (buttonPushed(3)) {
+    if (buttonPushed(3) && button3_index != 4) {
       _delay_ms(500);
       nextChar(button3_index, visible_word);
     }
