@@ -20,6 +20,8 @@
 const uint8_t SEGMENT_MAP[];
 const uint8_t SEGMENT_SELECT[];
 const uint8_t ALPHABET_MAP[];
+const int VOWELS_MAP[];
+const int SYMBOL_MAP[];
 
 void initDisplay();
 void writeNumberToSegment(uint8_t segment, uint8_t value);

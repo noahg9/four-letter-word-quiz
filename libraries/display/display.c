@@ -1,5 +1,4 @@
 #include "display.h"
-
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -14,6 +13,10 @@ const uint8_t SEGMENT_SELECT[] = {0xF1, 0xF2, 0xF4, 0xF8};
 const uint8_t ALPHABET_MAP[] = {0x88, 0x83, 0xC6, 0xA1, 0x86, 0x8E, 0xC2, 0x89, 0xCF, 0xE1, 0x8A, 0xC7, 0xEA, 0xC8, 0xC0, 0x8C, 0x4A, 0xCC, 0x92, 0x87,
                                 0xC1,
                                 0xC1, 0xD5, 0x89, 0x91, 0xA4};
+// Vowels in alphabetical order
+const int VOWEL_MAP[] = {0x88, 0x86, 0xCF, 0xC0, 0xC1};
+// Full stop(.), Question mark(?), Underscore(_)
+const int SYMBOL_MAP[] = {0x7F, 0XAC, 0xF7};
 
 
 void initDisplay() {
@@ -93,6 +96,18 @@ void writeCharToSegment(uint8_t segment, char character) {
   uint8_t value = 0;
   if (character >= 'A' && character <= 'Z') {
     value = ALPHABET_MAP[character - 'A'];
+  }
+  else if (character == '.')
+  {
+    value = SYMBOL_MAP[0]; // Get value from SYMBOL_MAP for "."
+  }
+  else if (character == '?')
+  {
+    value = SYMBOL_MAP[1]; // Get value from SYMBOL_MAP for "?"
+  }
+  else if (character == '_')
+  {
+    value = SYMBOL_MAP[2]; // Get value from SYMBOL_MAP for "_"
   }
   else {
     value = SPACE;
