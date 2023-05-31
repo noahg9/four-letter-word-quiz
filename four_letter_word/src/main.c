@@ -5,12 +5,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "usart.h"
-#include "led.h"
-#include "display.h"
-#include "button.h"
-#include "potentio.h"
-#include "buzzer.h"
+#include <usart.h>
+#include <led.h>
+#include <display.h>
+#include <button.h>
+#include <potentio.h>
+#include <buzzer.h>
+
+ISR( PCINT1_vect )
+{
+    // button 1 is pressed (bit is set to 0)?
+    if ( buttonPushed(1) )
+    {
+        //We wait 1000 microseconds and check again (debounce!)
+        _delay_us( 1000 );
+    }
+}
+
+struct puzzle {
+  char category[5];
+  char word[5];
+  int attempts;
+  int time;
+};
 
 char* categories[4] = {"ANML", "HMAN", "CTRY", "THNG"};
 char* words[4][28] = {
@@ -81,10 +98,15 @@ void incorrectSound()
 int main() 
 {
   initUSART();
+  initDisplay();
+  enableAllLeds();
+  lightDownAllLeds();
   enableButton(1);
   enableButton(2);
   enableButton(3);
-  initDisplay();
+  PCICR |= _BV( PCIE1 );
+  PCMSK1 |= _BV( BUTTON1 );
+  sei();
   srand(time(NULL));
 
   printf("Welcome to the four-letter word quiz!");
@@ -100,7 +122,6 @@ int main()
   while (!buttonPushed(2)) 
   {
     cat_id++;
-    _delay_ms(500);
     while (!buttonPushed(1) && !buttonPushed(2)) 
     {
       writeString(categories[cat_id]);
@@ -119,7 +140,7 @@ int main()
   int button2_index = setIndex(2, visible_word);
   int button3_index = setIndex(3, visible_word);
   
-  _delay_ms(500);
+  struct puzzle puzzle1 = {categories[cat_id], secret_word, 0, 0};
   
   while (1) 
   {
@@ -128,17 +149,14 @@ int main()
 
     if (buttonPushed(1)) 
     {
-      _delay_ms(500);
       nextChar(button1_index, visible_word);
     }
     if (buttonPushed(2) && button2_index != 4) 
     {
-      _delay_ms(500);
       nextChar(button2_index, visible_word);
     }
     if (buttonPushed(3) && button3_index != 4) 
     {
-      _delay_ms(500);
       nextChar(button3_index, visible_word);
     }
 

@@ -1,7 +1,5 @@
 #include <button.h>
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/interrupt.h>
+#include <stdio.h>
 
 void enableButton( int button ) {
   if ( button < 1 || button > 3 ) return;

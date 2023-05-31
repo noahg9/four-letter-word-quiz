@@ -1,4 +1,4 @@
-#include <led.h>
+#include "led.h"
 #include <util/delay.h>
 #include <avr/io.h>
 
@@ -69,4 +69,13 @@ void fadeOutLed(int led, int duration) {
   for (int perc = 100; perc >= 0; perc--) {
     dimLed(led, perc, duration/100);
   }
+}
+
+int ledLitUp(int led) {
+  if ( led < 1 || led > 3 ) return 0;
+  if ( bit_is_set( LED_PORT, led ) )
+  {
+      return 1;
+  }
+  return 0;
 }
