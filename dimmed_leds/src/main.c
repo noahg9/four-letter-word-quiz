@@ -5,11 +5,11 @@
 
 int main() {
   while (1) {
-    fadeInLed(2, 2000);
+    fadeInOneLed(2, 2000);
     _delay_ms(1000);
-    fadeOutLed(2, 2000);
+    fadeOutOneLed(2, 2000);
     _delay_ms(1000);
-    dimLed(0, 50, 2000);
+    dimOneLed(0, 50, 2000);
   }
   return 0;
 }

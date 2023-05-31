@@ -7,7 +7,7 @@
 #define LED1 PB2
 #define LED2 PB3
 #define LED3 PB4
-#define LED2 PB5
+#define LED4 PB5
 
 void enableOneLed (int led);
 
@@ -29,10 +29,16 @@ void lightDownAllLeds ();
 
 void lightToggleOneLed (int led);
 
-void dimLed(int led, int percentage, int duration);
+void dimOneLed(int led, int percentage, int duration);
 
-void fadeInLed(int led, int duration);
+void dimAllLeds(int percentage, int duration);
 
-void fadeOutLed(int led, int duration);
+void fadeInOneLed(int led, int duration);
+
+void fadeInAllLeds(int duration);
+
+void fadeOutOneLed(int led, int duration);
+
+void fadeOutAllLeds(int duration);
 
 int ledLitUp(int led);

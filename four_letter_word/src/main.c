@@ -12,70 +12,6 @@
 #include <potentio.h>
 #include <buzzer.h>
 
-int stage;
-int cat_id;
-char* secret_word;
-char visible_word[5];
-int button1_index;
-int button2_index;
-int button3_index;
-
-ISR( PCINT1_vect )
-{
-  if (stage == 1) {
-    if ( buttonPushed(1) )
-    {
-      stage++;
-      lightUpAllLeds();
-      _delay_ms( 500 );
-      lightDownAllLeds();
-    }
-  }
-  if (stage == 2) {
-    if ( buttonPushed(1) )
-    {
-      cat_id++;
-      lightUpAllLeds();
-      _delay_ms( 500 );
-      lightDownAllLeds();
-      if (cat_id == 4) 
-      {
-        cat_id = 0;
-      }
-    }
-    if ( buttonPushed(2) )
-    {
-      stage++;
-      lightUpAllLeds();
-      _delay_ms( 500 );
-      lightDownAllLeds();
-    }
-  }
-  if (stage == 3) {
-    if (buttonPushed(1)) 
-    {
-      nextChar(button1_index, visible_word);
-      lightUpOneLed(button1_index);
-      _delay_ms( 500 );
-      lightDownOneLed(button1_index);
-    }
-    if (buttonPushed(2) && button2_index != 4) 
-    {
-      nextChar(button2_index, visible_word);
-      lightUpOneLed(button2_index);
-      _delay_ms( 500 );
-      lightDownOneLed(button2_index);
-    }
-    if (buttonPushed(3) && button3_index != 4) 
-    {
-      nextChar(button3_index, visible_word);
-      lightUpOneLed(button3_index);
-      _delay_ms( 500 );
-      lightDownOneLed(button3_index);
-    }
-  }
-}
-
 struct puzzle {
   char category[5];
   char word[5];
@@ -83,9 +19,18 @@ struct puzzle {
   int time;
 };
 
+int stage = 1;
+int cat_id = 0;
+char* secret_word;
+char visible_word[5];
+int button1_index = 0;
+int button2_index = 0;
+int button3_index = 0;
+uint16_t adcValue = 0;
+
 char* categories[4] = {"ANML", "HMAN", "CTRY", "THNG"};
 char* words[4][28] = {
-  {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN"
+  {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
   "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
   {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH" 
   "LIAM", "EMMA", "KATE", "LUNA", "JACK", "OWEN", "JOHN", "LUKE", "ELLA", "LILY", "RYAN", "ADAM", "ANNA", "ELLA"},
@@ -94,6 +39,72 @@ char* words[4][28] = {
   {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE", "RING", "COMB", "SOAP", "PIPE", "VASE", "COIN", "FLAG"
   "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"}
 };
+
+void initTimer1()
+{
+    TCCR1A |= _BV(WGM10); // WGM10 = 1 and WGM12 = 1 --> 8 bit Fast PWM Mode
+    TCCR1B |= _BV(WGM12);
+
+    TCCR1B |= _BV(CS12) | _BV(CS10); // CS12 = 1 and CS10 = 1 --> prescaler factor is now 1024 (= every 64 us)
+
+    TCCR1A |= _BV(COM1B1);
+}
+
+ISR( PCINT1_vect )
+{
+  if (stage == 1) {
+    if ( buttonPushed(1) )
+    {
+      stage++;
+      _delay_ms(500);
+    }
+  }
+  if (stage == 2) {
+    if ( buttonPushed(1) )
+    {
+      cat_id++;
+      _delay_ms(500);
+      if (cat_id == 4) 
+      {
+        cat_id = 0;
+      }
+    }
+    if ( buttonPushed(2) )
+    {
+      stage++;
+      _delay_ms(500);
+    }
+  }
+  if (stage == 3) {
+    if (buttonPushed(1)) 
+    {
+      nextChar(button1_index, visible_word);
+      lightUpAllLeds();
+      lightDownOneLed(button1_index);
+      _delay_ms(500);
+    }
+    if (buttonPushed(2) && button2_index != 4) 
+    {
+      nextChar(button2_index, visible_word);
+      lightUpAllLeds();
+      lightDownOneLed(button2_index);
+      _delay_ms(500);
+
+    }
+    if (buttonPushed(3) && button3_index != 4) 
+    {
+      nextChar(button3_index, visible_word);
+      lightUpAllLeds();
+      lightDownOneLed(button3_index);
+      _delay_ms(500);    
+    }
+  }
+}
+
+ISR(ADC_vect)
+{
+  adcValue = ADC;
+}
 
 void hideConsonants(const char *secret_word, char *visible_word) 
 {
@@ -140,13 +151,18 @@ void nextChar(int index, char *visible_word)
 void correctSound() 
 {
   enableBuzzer();
-  playTone(C5, 100);
-}
+  float frequencies[] = { C5, D5, E5, F5, G5, A5, B5, C6 };
+  for ( int note = 0; note < 8; note++ )
+  {
+    playTone( frequencies[note], 150 );
+    _delay_ms( 150 ); 
+  }
+ }
 
 void incorrectSound() 
 {
   enableBuzzer();
-  playTone(C5, 100);
+  playTone(C6, 1000);
 }
 
 
@@ -180,7 +196,7 @@ void stage3() {
   
   struct puzzle puzzle1 = {categories[cat_id], secret_word, 0, 0};
 
-  while (1) 
+  while (stage == 3) 
   {
     writeString(visible_word);
   }
@@ -189,29 +205,22 @@ void stage3() {
 int main() 
 {
   initUSART();
+  initTimer1(); 
   initDisplay();
+  initADC();
   enableAllLeds();
-  lightDownAllLeds();
-  enableButton(1);
-  enableButton(2);
-  enableButton(3);
+  lightUpAllLeds();
+  enableAllButtons();
   stage = 1;
   cat_id = 0;
   PCICR |= _BV( PCIE1 );
   PCMSK1 |= _BV( PC1 ) | _BV( PC2 ) | _BV( PC3 );
   sei();
   srand(time(NULL));
-  while (1) {
-    if (stage == 1) {
-      stage1();
-    }
-    if (stage == 2) {
-      stage2();
-    }
-    if (stage == 3) {
-      stage3();
-    }
-  }
+  
+  stage1();
+  stage2();
+  stage3();
+
   return 0;
 }
-

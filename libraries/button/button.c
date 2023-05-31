@@ -7,6 +7,13 @@ void enableButton( int button ) {
   PORTC |= ( 1 << ( PC1 + (button-1) ) );
 }
 
+void enableAllButtons() {
+  for (int i = 0; i < 3; i++) {
+    DDRC &= ~( 1 << ( PC1 + (i) ) );
+    PORTC |= ( 1 << ( PC1 + (i) ) );
+  }
+}
+
 int buttonPushed( int button ) {
   if ( button < 1 || button > 3 ) return 0;
   if (( PINC & ( 1 << ( PC1 + (button-1) ) )) == 0 )
