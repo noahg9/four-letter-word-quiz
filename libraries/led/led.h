@@ -9,27 +9,27 @@
 #define LED3 PB4
 #define LED2 PB5
 
-void enableOneLed (int lednumber);
+void enableOneLed (int led);
 
 void enableMultipleLeds (uint8_t leds);
 
 void enableAllLeds ();
 
-void lightUpOneLed (int lednumber);
+void lightUpOneLed (int led);
 
 void lightUpMultipleLeds (uint8_t leds);
 
 void lightUpAllLeds ();
 
-void lightDownOneLed (int lednumber);
+void lightDownOneLed (int led);
 
 void lightDownMultipleLeds (uint8_t leds);
 
 void lightDownAllLeds ();
 
-void lightToggleOneLed (int lednumber);
+void lightToggleOneLed (int led);
 
-void dimLed(int lednumber, int percentage, int duration);
+void dimLed(int led, int percentage, int duration);
 
 void fadeInLed(int led, int duration);
 

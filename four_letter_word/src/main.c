@@ -12,14 +12,68 @@
 #include <potentio.h>
 #include <buzzer.h>
 
+int stage;
+int cat_id;
+char* secret_word;
+char visible_word[5];
+int button1_index;
+int button2_index;
+int button3_index;
+
 ISR( PCINT1_vect )
 {
-    // button 1 is pressed (bit is set to 0)?
+  if (stage == 1) {
     if ( buttonPushed(1) )
     {
-        //We wait 1000 microseconds and check again (debounce!)
-        _delay_us( 1000 );
+      stage++;
+      lightUpAllLeds();
+      _delay_ms( 500 );
+      lightDownAllLeds();
     }
+  }
+  if (stage == 2) {
+    if ( buttonPushed(1) )
+    {
+      cat_id++;
+      lightUpAllLeds();
+      _delay_ms( 500 );
+      lightDownAllLeds();
+      if (cat_id == 4) 
+      {
+        cat_id = 0;
+      }
+    }
+    if ( buttonPushed(2) )
+    {
+      stage++;
+      lightUpAllLeds();
+      _delay_ms( 500 );
+      lightDownAllLeds();
+    }
+  }
+  if (stage == 3) {
+    if (buttonPushed(1)) 
+    {
+      nextChar(button1_index, visible_word);
+      lightUpOneLed(button1_index);
+      _delay_ms( 500 );
+      lightDownOneLed(button1_index);
+    }
+    if (buttonPushed(2) && button2_index != 4) 
+    {
+      nextChar(button2_index, visible_word);
+      lightUpOneLed(button2_index);
+      _delay_ms( 500 );
+      lightDownOneLed(button2_index);
+    }
+    if (buttonPushed(3) && button3_index != 4) 
+    {
+      nextChar(button3_index, visible_word);
+      lightUpOneLed(button3_index);
+      _delay_ms( 500 );
+      lightDownOneLed(button3_index);
+    }
+  }
 }
 
 struct puzzle {
@@ -95,6 +149,43 @@ void incorrectSound()
   playTone(C5, 100);
 }
 
+
+void stage1() {
+  printf("Welcome to the four-letter word quiz!");
+  
+  while (stage == 1) 
+  {
+    writeString("CAT?");
+  }
+}
+
+void stage2() {
+  
+  printf("\n1 - Next category\n2 - Select category \nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG)");
+
+  while (stage == 2)
+  {
+    writeString(categories[cat_id]);
+  }
+}
+
+void stage3() {
+
+  secret_word = words[cat_id][rand() % 7];
+  hideConsonants(secret_word, visible_word);
+
+  button1_index = setIndex(1, visible_word);
+  button2_index = setIndex(2, visible_word);
+  button3_index = setIndex(3, visible_word);
+  
+  struct puzzle puzzle1 = {categories[cat_id], secret_word, 0, 0};
+
+  while (1) 
+  {
+    writeString(visible_word);
+  }
+}
+
 int main() 
 {
   initUSART();
@@ -104,63 +195,23 @@ int main()
   enableButton(1);
   enableButton(2);
   enableButton(3);
+  stage = 1;
+  cat_id = 0;
   PCICR |= _BV( PCIE1 );
-  PCMSK1 |= _BV( BUTTON1 );
+  PCMSK1 |= _BV( PC1 ) | _BV( PC2 ) | _BV( PC3 );
   sei();
   srand(time(NULL));
-
-  printf("Welcome to the four-letter word quiz!");
-  
-  while (!buttonPushed(1)) 
-  {
-    writeString("CAT?");
-  }
-
-  printf("\n1 - Next category\n2 - Select category \nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG)");
-  int cat_id = -1;
-
-  while (!buttonPushed(2)) 
-  {
-    cat_id++;
-    while (!buttonPushed(1) && !buttonPushed(2)) 
-    {
-      writeString(categories[cat_id]);
+  while (1) {
+    if (stage == 1) {
+      stage1();
     }
-    if (cat_id == 4 && !buttonPushed(2)) 
-    {
-      cat_id = 0;
+    if (stage == 2) {
+      stage2();
+    }
+    if (stage == 3) {
+      stage3();
     }
   }
-  
-  char* secret_word = words[cat_id][rand() % 7];
-  char visible_word[5];
-  hideConsonants(secret_word, visible_word);
-
-  int button1_index = setIndex(1, visible_word);
-  int button2_index = setIndex(2, visible_word);
-  int button3_index = setIndex(3, visible_word);
-  
-  struct puzzle puzzle1 = {categories[cat_id], secret_word, 0, 0};
-  
-  while (1) 
-  {
-    
-    writeString(visible_word);
-
-    if (buttonPushed(1)) 
-    {
-      nextChar(button1_index, visible_word);
-    }
-    if (buttonPushed(2) && button2_index != 4) 
-    {
-      nextChar(button2_index, visible_word);
-    }
-    if (buttonPushed(3) && button3_index != 4) 
-    {
-      nextChar(button3_index, visible_word);
-    }
-
-  }
-
   return 0;
 }
+

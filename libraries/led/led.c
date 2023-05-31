@@ -2,9 +2,9 @@
 #include <util/delay.h>
 #include <avr/io.h>
 
-void enableOneLed ( int lednumber ) {
-    if ( lednumber < 0 || lednumber > NUMBER_OF_LEDS-1 ) return;
-    DDRB |= ( 1 << ( PB2 + lednumber ));
+void enableOneLed ( int led ) {
+    if ( led < 0 || led > NUMBER_OF_LEDS-1 ) return;
+    DDRB |= ( 1 << ( PB2 + led ));
 }
 
 void enableMultipleLeds ( uint8_t leds ) {
@@ -28,9 +28,9 @@ void lightUpAllLeds () {
     PORTB &= ~ALL_LEDS_MASK;
 }
 
-void lightDownOneLed ( int lednumber ) {
-    if ( lednumber < 0 || lednumber > 3 ) return;
-    PORTB |= ( 1 << ( PB2 + lednumber ));
+void lightDownOneLed ( int led ) {
+    if ( led < 0 || led > 3 ) return;
+    PORTB |= ( 1 << ( PB2 + led ));
 }
 
 void lightDownMultipleLeds ( uint8_t leds ) {
@@ -41,19 +41,19 @@ void lightDownAllLeds () {
     PORTB |= ALL_LEDS_MASK;
 }
 
-void lightToggleOneLed ( int lednumber ) {
-    if ( lednumber < 0 || lednumber > 3 ) return;
-    PORTB ^= ( 1 << ( PB2 + lednumber ));
+void lightToggleOneLed ( int led ) {
+    if ( led < 0 || led > 3 ) return;
+    PORTB ^= ( 1 << ( PB2 + led ));
 }
 
-void dimLed(int lednumber, int percentage, int duration) {
-  enableOneLed(lednumber);
+void dimLed(int led, int percentage, int duration) {
+  enableOneLed(led);
   for (int i = 0; i < duration; i++) {
       for (int i = 0; i < percentage; i++) {
-        lightUpOneLed(lednumber);
+        lightUpOneLed(led);
       }
       for (int i = 0; i < 100-percentage; i++) {
-        lightDownOneLed(lednumber);
+        lightDownOneLed(led);
       }
     _delay_ms(1);
   }
@@ -72,8 +72,8 @@ void fadeOutLed(int led, int duration) {
 }
 
 int ledLitUp(int led) {
-  if ( led < 1 || led > 3 ) return 0;
-  if ( bit_is_set( LED_PORT, led ) )
+  if ( led < 0 || led > NUMBER_OF_LEDS-1 ) return;
+  if ( bit_is_set( LED_PORT, PB2 + led ) )
   {
       return 1;
   }
