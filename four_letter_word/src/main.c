@@ -11,6 +11,13 @@
 #include <button.h>
 #include <potentio.h>
 #include <buzzer.h>
+#include <timer.h>
+
+// Constants
+#define MAX_CATEGORIES 5
+#define MAX_WORDS 30
+#define MAX_CATEGORY_NAME_LENGTH 5
+#define MAX_WORD_LENGTH 5
 
 typedef struct {
   char category[5];
@@ -19,38 +26,28 @@ typedef struct {
   int time;
 } PUZZLE;
 
-volatile int stage = 1;
-volatile int cat_id = 0;
-volatile char* secret_word;
-volatile char visible_word[5];
-volatile int button1_index = 0;
-volatile int button2_index = 0;
-volatile int button3_index = 0;
-volatile uint16_t adcValue = 0;
+int stage = 1;
+int cat_id = 0;
+char* secret_word;
+char visible_word[5];
+int button1_index = 0;
+int button2_index = 0;
+int button3_index = 0;
+uint16_t adcValue = 0;
 
 PUZZLE puzzle;
 
-const char* categories[5] = {"ANML", "HMAN", "CTRY", "THNG"};
-const char* words[5][28] = {
+char categories[MAX_CATEGORIES][MAX_CATEGORY_NAME_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG"};
+char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
   "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
-  {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH" 
+  {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH",
   "LIAM", "EMMA", "KATE", "LUNA", "JACK", "OWEN", "JOHN", "LUKE", "ELLA", "LILY", "RYAN", "ADAM", "ANNA", "ELLA"},
   {"IRAN", "PERU", "CUBA", "CHAD", "FIJI", "LAOS", "TOGO", "IRAQ", "BELG", "ENGL", "IREL", "NETH", "DENM", "SWED",
   "NORW", "FINL", "GERM", "FRAN", "SPAI", "PORT", "ITAL", "MEXI", "CANA", "POLA", "BRAZ", "ARGE", "JAPA", "PHIL"},
-  {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE", "RING", "COMB", "SOAP", "PIPE", "VASE", "COIN", "FLAG"
+  {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE", "RING", "COMB", "SOAP", "PIPE", "VASE", "COIN", "FLAG",
   "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"}
 };
-
-void initTimer1()
-{
-    TCCR1A |= _BV(WGM10); // WGM10 = 1 and WGM12 = 1 --> 8-bit Fast PWM Mode
-    TCCR1B |= _BV(WGM12);
-
-    TCCR1B |= _BV(CS12) | _BV(CS10); // CS12 = 1 and CS10 = 1 --> prescaler factor is now 1024 (= every 64 us)
-
-    TCCR1A |= _BV(COM1B1); // Enable PWM output on OC1B pin
-}
 
 ISR( PCINT1_vect )
 {
