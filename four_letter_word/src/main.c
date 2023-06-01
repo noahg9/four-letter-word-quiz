@@ -12,24 +12,26 @@
 #include <potentio.h>
 #include <buzzer.h>
 
-struct puzzle {
+typedef struct {
   char category[5];
   char word[5];
   int attempts;
   int time;
-};
+} PUZZLE;
 
-int stage = 1;
-int cat_id = 0;
-char* secret_word;
-char visible_word[5];
-int button1_index = 0;
-int button2_index = 0;
-int button3_index = 0;
-uint16_t adcValue = 0;
+volatile int stage = 1;
+volatile int cat_id = 0;
+volatile char* secret_word;
+volatile char visible_word[5];
+volatile int button1_index = 0;
+volatile int button2_index = 0;
+volatile int button3_index = 0;
+volatile uint16_t adcValue = 0;
 
-char* categories[4] = {"ANML", "HMAN", "CTRY", "THNG"};
-char* words[4][28] = {
+PUZZLE puzzle;
+
+const char* categories[5] = {"ANML", "HMAN", "CTRY", "THNG"};
+const char* words[5][28] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
   "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
   {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH" 
@@ -42,12 +44,12 @@ char* words[4][28] = {
 
 void initTimer1()
 {
-    TCCR1A |= _BV(WGM10); // WGM10 = 1 and WGM12 = 1 --> 8 bit Fast PWM Mode
+    TCCR1A |= _BV(WGM10); // WGM10 = 1 and WGM12 = 1 --> 8-bit Fast PWM Mode
     TCCR1B |= _BV(WGM12);
 
     TCCR1B |= _BV(CS12) | _BV(CS10); // CS12 = 1 and CS10 = 1 --> prescaler factor is now 1024 (= every 64 us)
 
-    TCCR1A |= _BV(COM1B1);
+    TCCR1A |= _BV(COM1B1); // Enable PWM output on OC1B pin
 }
 
 ISR( PCINT1_vect )
@@ -110,9 +112,11 @@ void hideConsonants(const char *secret_word, char *visible_word)
 {
     for (int i = 0; i < 4; i++) 
     {
-        visible_word[i] = secret_word[i];
-        if (!(visible_word[i] == 'A' || visible_word[i] == 'E' || visible_word[i] == 'I' 
-        || visible_word[i] == 'O' || visible_word[i] == 'U')) 
+        if (secret_word[i] == 'A' || secret_word[i] == 'E' || secret_word[i] == 'I' || secret_word[i] == 'O' || secret_word[i] == 'U')
+        {
+            visible_word[i] = secret_word[i];
+        }
+        else
         {
             visible_word[i] = '_';
         }
@@ -120,7 +124,7 @@ void hideConsonants(const char *secret_word, char *visible_word)
     visible_word[4] = '\0';  // Add null terminator
 }
 
-int setIndex(int button, char *visible_word) 
+int setIndex(int button, char* visible_word) 
 {
   int cons_count = 0;
   for (int i = 0; i < 4; i++) 
@@ -165,43 +169,6 @@ void incorrectSound()
   playTone(C6, 1000);
 }
 
-
-void stage1() {
-  printf("Welcome to the four-letter word quiz!");
-  
-  while (stage == 1) 
-  {
-    writeString("CAT?");
-  }
-}
-
-void stage2() {
-  
-  printf("\n1 - Next category\n2 - Select category \nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG)");
-
-  while (stage == 2)
-  {
-    writeString(categories[cat_id]);
-  }
-}
-
-void stage3() {
-
-  secret_word = words[cat_id][rand() % 7];
-  hideConsonants(secret_word, visible_word);
-
-  button1_index = setIndex(1, visible_word);
-  button2_index = setIndex(2, visible_word);
-  button3_index = setIndex(3, visible_word);
-  
-  struct puzzle puzzle1 = {categories[cat_id], secret_word, 0, 0};
-
-  while (stage == 3) 
-  {
-    writeString(visible_word);
-  }
-}
-
 int main() 
 {
   initUSART();
@@ -218,9 +185,37 @@ int main()
   sei();
   srand(time(NULL));
   
-  stage1();
-  stage2();
-  stage3();
+  while (1)
+  {
+    printf("Welcome to the four-letter word quiz!");
+  
+    while (stage == 1) 
+    {
+      writeString("CAT?");
+    }
+
+    printf("\n1 - Next category\n2 - Select category \nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG)");
+
+    while (stage == 2)
+    {
+      writeString(categories[cat_id]);
+    }
+
+    strcpy(puzzle.category, categories[cat_id]);
+    strcpy(puzzle.word, words[cat_id][rand() % 28]);
+    puzzle.attempts = 0;
+
+    hideConsonants(puzzle.word, visible_word);
+
+    button1_index = setIndex(1, visible_word);
+    button2_index = setIndex(2, visible_word);
+    button3_index = setIndex(3, visible_word);
+    
+    while (stage == 3) 
+    {
+      writeString(visible_word);
+    }
+  }
 
   return 0;
 }
