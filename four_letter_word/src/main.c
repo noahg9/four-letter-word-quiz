@@ -14,7 +14,7 @@
 #include <timer.h>
 
 // Constants
-#define MAX_CATEGORIES 4
+#define MAX_CATEGORIES 6
 #define MAX_WORDS 28
 #define MAX_CATEGORY_LENGTH 5
 #define MAX_WORD_LENGTH 5
@@ -49,7 +49,7 @@ volatile int total_game_time = 0; // declared volatile so that it can be modifie
 
 PUZZLE puzzle;
 
-char categories[MAX_CATEGORIES][MAX_CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG"};
+char categories[MAX_CATEGORIES][MAX_CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG", "CLUB", "COMP"};
 char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
   "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
@@ -58,7 +58,11 @@ char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
   {"IRAN", "PERU", "CUBA", "CHAD", "FIJI", "LAOS", "TOGO", "IRAQ", "BELG", "ENGL", "IREL", "NETH", "DENM", "SWED",
   "NORW", "FINL", "GERM", "FRAN", "SPAI", "PORT", "ITAL", "MEXI", "CANA", "POLA", "BRAZ", "ARGE", "JAPA", "PHIL"},
   {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE", "RING", "COMB", "SOAP", "PIPE", "VASE", "COIN", "FLAG",
-  "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"}
+  "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"},
+  {"CHEL", "MANU", "MANC", "ARSE", "TOTT", "LIVE", "EVER", "BARC", "REAL", "ATLE", "BAYE", "DORT", "JUVE", "MILA",
+  "INTE", "VALE", "ANDE", "ANTW", "AJAX", "NAPO", "FENE", "GALA", "BESI", "SEVI", "ROMA", "LAZI", "BURN", "BRUG"},
+  {"NIKE", "APPL", "MICR", "ADID", "TESL", "META", "VERS", "AMAZ", "GUCC", "ANDR", "LENO", "SAMS", "WALM", "VISA",
+  "FORD", "NETF", "INTE", "ALPH", "TOYO", "MCDO", "JPMO", "PFIZ", "DISN", "UBER", "AIRB", "SONY", "HOND", "CISC"}
 };
 
 // this ISR runs every time TCNT0 equals the value in the OCRA register (249)
@@ -93,7 +97,7 @@ ISR( PCINT1_vect )
     {
       cat_id++;
       _delay_ms(500);
-      if (cat_id == 4) 
+      if (cat_id == MAX_CATEGORIES) 
       {
         cat_id = 0;
       }
@@ -240,7 +244,8 @@ int main()
     printf("\nTime until button 1 pressed: %dms", seed_time);
     srand(seed_time);
 
-    printf("\n1 - Next category\n2 - Select category \nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG)");
+    printf("\n1 - Next category\n2 - Select category");
+    printf("\nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG), football club (CLUB), company (COMP)");
 
     while (stage == 2)
     {
@@ -261,7 +266,7 @@ int main()
     while (stage == 3) 
     {
       writeString(visible_word);
-      if (verify_time >= 5) {
+      if (verify_time >= 60) {
         if (strcmp(visible_word, puzzle.word) == 0) {
           stage++;
         }
