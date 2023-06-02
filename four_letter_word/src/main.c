@@ -34,18 +34,10 @@ int button2_index = 0;
 int button3_index = 0;
 uint16_t adc_value = 0;
 
-
-volatile int verify_time;
-
-volatile int game_start_time;
-volatile int seed_time;
-volatile int time_elapsed_button1_pressed; // = game_start_time - seed_time
-// flags for the timer ISRs:
-volatile int seed_set = 0; // For time 1 press
-volatile int game_started = 0; // For total game time
-
-volatile int total_game_time = 0; // declared volatile so that it can be modified by an interrupt:
-
+volatile int seed_time = 0;
+volatile int verify_time = 0;
+volatile int seed_set = 0;
+volatile int game_started = 0;
 
 PUZZLE puzzle;
 
@@ -65,21 +57,21 @@ char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
   "FORD", "NETF", "INTE", "ALPH", "TOYO", "MCDO", "JPMO", "PFIZ", "DISN", "UBER", "AIRB", "SONY", "HOND", "CISC"}
 };
 
-// this ISR runs every time TCNT0 equals the value in the OCRA register (249)
+// Run every time TCNT0 equals the value in the OCRA register (249)
 ISR(TIMER0_COMPA_vect)
 {
   if (!seed_set)
   {
-    seed_time++; // increment the milliseconds count.
+    seed_time++;  // Increment seed time (milliseconds)
   }
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-  if (game_started)//Initally set to 0 do it doesn't trigger at initialization
+  if (game_started)
   {
-    puzzle.time++; // increment the game time counter (in seconds)...
-    verify_time++;
+    puzzle.time++;  // Increment game time (seconds)
+    verify_time++;  // Increment verify time (seconds)
   }
 }
 
@@ -106,7 +98,7 @@ ISR( PCINT1_vect )
     {
       stage++;
       _delay_ms(500);
-      game_started = 1; //Now it should trigger the code within the isr...
+      game_started = 1; // Activates ISR for timer 1
     }
   }
   if (stage == 3) {
@@ -125,7 +117,6 @@ ISR( PCINT1_vect )
       lightUpAllLeds();
       lightDownOneLed(button2_index);
       _delay_ms(500);
-
     }
     if (buttonPushed(3) && button3_index != 4) 
     {
@@ -162,7 +153,7 @@ void hideConsonants(const char *word, char *visible_word)
         visible_word[i] = '_';
     }
   }
-  visible_word[MAX_WORD_LENGTH-1] = '\0';  // Add null terminator
+  visible_word[MAX_WORD_LENGTH-1] = '\0'; // Add null terminator
 }
 
 int setIndex(int button, char* visible_word) 
@@ -210,7 +201,7 @@ void incorrectSound()
   playTone(C6, 1000);
 }
 
-int main() 
+void setup()
 {
   initUSART();
   initDisplay();
@@ -222,17 +213,17 @@ int main()
   PCICR |= _BV( PCIE1 );
   PCMSK1 |= _BV( PC1 ) | _BV( PC2 ) | _BV( PC3 );
   sei();
-  
+  initTimer0();
   initTimer1();
-  initTimer0(); // testing...
+}
 
-  
+int main() 
+{
+  setup();  
   while (1)
   {
     cat_id = 0;
     verify_time = time(NULL);
-    game_start_time = 0;
-    game_start_time = time(NULL); // Store the current time as game start time
 
     printf("\nWelcome to the four-letter word quiz!");
   
@@ -241,7 +232,6 @@ int main()
       writeString("CAT?");
     }
 
-    printf("\nTime until button 1 pressed: %dms", seed_time);
     srand(seed_time);
 
     printf("\n1 - Next category\n2 - Select category");
@@ -278,7 +268,6 @@ int main()
           printf("\nCurrent time: %d", puzzle.time);
           printf("\nCurrent attempts: %d", puzzle.attempts);   
           hideConsonants(puzzle.word, visible_word);
-     
         }
       }
     }
@@ -286,6 +275,7 @@ int main()
     int seconds = puzzle.time - minutes*60;
     printf("\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
     puzzle.category, puzzle.word, puzzle.attempts, minutes, seconds);
+    
     while (stage == 4) {
       writeString("YES!");
     }
