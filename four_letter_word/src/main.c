@@ -186,7 +186,7 @@ void nextChar(int index, char *visible_word)
 
 void correctSound() 
 {
-  //enableBuzzer();
+  enableBuzzer();
   float frequencies[] = { C5, D5, E5, F5, G5, A5, B5, C6 };
   for ( int note = 0; note < 8; note++ )
   {
@@ -197,7 +197,7 @@ void correctSound()
 
 void incorrectSound() 
 {
-  //enableBuzzer();
+  enableBuzzer();
   playTone(C6, 1000);
 }
 
@@ -225,17 +225,25 @@ int main()
     cat_id = 0;
     verify_time = time(NULL);
 
-    printf("\nWelcome to the four-letter word quiz!");
+    printf("\nWelcome to the four-letter word quiz.");
+    printf("\nButton 1 - Begin");
   
     while (stage == 1) 
     {
       writeString("CAT?");
     }
 
-    srand(seed_time);
+    srand(seed_time); // Set random with seed as the milliseconds until button 1 is pressed
 
-    printf("\n1 - Next category\n2 - Select category");
-    printf("\nCategories: animal (ANML), human (HMAN), country (CTRY), thing (THNG), football club (CLUB), company (COMP)");
+    printf("\nButton 1 - Next category");
+    printf("\nButton 2 - Select current category");
+    printf("\nCategories:");
+    printf("\n- Animal (ANML)");
+    printf("\n- Human (HMAN)");
+    printf("\n- Country (ANML)");
+    printf("\n- Thing (ANML)");
+    printf("\n- Football club (CLUB)");
+    printf("\n- Company (COMP)");
 
     while (stage == 2)
     {
@@ -252,18 +260,24 @@ int main()
     button1_index = setIndex(1, visible_word);
     button2_index = setIndex(2, visible_word);
     button3_index = setIndex(3, visible_word);
-    
+
+    printf("\nButton 1 - Edit first underscore");
+    printf("\nButton 2 - Edit second underscore (if exists)");
+    printf("\nButton 3 - Edit third underscore (if exists)");
+
     while (stage == 3) 
     {
       writeString(visible_word);
       if (verify_time >= 60) {
         if (strcmp(visible_word, puzzle.word) == 0) {
           stage++;
+          correctSound();
         }
         else 
         {
           verify_time = 0;
           puzzle.attempts++;
+          incorrectSound();
           printf("\n%s is incorrent.", visible_word);
           printf("\nCurrent time: %d", puzzle.time);
           printf("\nCurrent attempts: %d", puzzle.attempts);   
@@ -275,6 +289,7 @@ int main()
     int seconds = puzzle.time - minutes*60;
     printf("\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
     puzzle.category, puzzle.word, puzzle.attempts, minutes, seconds);
+    printf("\nButton 1 - Play again");
     
     while (stage == 4) {
       writeString("YES!");
