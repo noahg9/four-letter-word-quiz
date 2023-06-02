@@ -28,7 +28,6 @@ typedef struct {
 
 int stage = 1;
 int cat_id = 0;
-char* secret_word;
 char visible_word[MAX_WORD_LENGTH];
 int button1_index = 0;
 int button2_index = 0;
@@ -75,7 +74,7 @@ ISR(TIMER1_COMPA_vect)
 {
   if (game_started)//Initally set to 0 do it doesn't trigger at initialization
   {
-    total_game_time++; // increment the game time counter (in seconds)...
+    puzzle.time++; // increment the game time counter (in seconds)...
     verify_time++;
   }
 }
@@ -83,14 +82,14 @@ ISR(TIMER1_COMPA_vect)
 ISR( PCINT1_vect )
 {
   if (stage == 1) {
-    if ( buttonPushed(1) )
+    if (buttonPushed(1))
     {
       stage++;
       _delay_ms(500);
     }
   }
   if (stage == 2) {
-    if ( buttonPushed(1) )
+    if (buttonPushed(1))
     {
       cat_id++;
       _delay_ms(500);
@@ -99,7 +98,7 @@ ISR( PCINT1_vect )
         cat_id = 0;
       }
     }
-    if ( buttonPushed(2) )
+    if (buttonPushed(2))
     {
       stage++;
       _delay_ms(500);
@@ -114,7 +113,7 @@ ISR( PCINT1_vect )
       lightUpAllLeds();
       lightDownOneLed(button1_index);
       _delay_ms(500);
-    }
+    } 
     if (buttonPushed(2) && button2_index != 4) 
     {
       nextChar(button2_index, visible_word);
@@ -133,6 +132,11 @@ ISR( PCINT1_vect )
       _delay_ms(500);    
     }
   }
+  if (stage == 4) {
+    if (buttonPushed(1)) {
+      stage = 1;
+    }
+  }
 }
 
 ISR(ADC_vect)
@@ -140,20 +144,21 @@ ISR(ADC_vect)
   adc_value = ADC;
 }
 
-void hideConsonants(const char *secret_word, char *visible_word) 
+void hideConsonants(const char *word, char *visible_word) 
 {
-    for (int i = 0; i < MAX_WORD_LENGTH-1; i++) 
+  for (int i = 0; i < MAX_WORD_LENGTH-1; i++) 
+  {
+    if (word[i] == 'A' || word[i] == 'E' || word[i] == 'I' || word[i] == 'O' 
+    || word[i] == 'U' || word[i] == visible_word[i])
     {
-        if (secret_word[i] == 'A' || secret_word[i] == 'E' || secret_word[i] == 'I' || secret_word[i] == 'O' || secret_word[i] == 'U')
-        {
-            visible_word[i] = secret_word[i];
-        }
-        else
-        {
-            visible_word[i] = '_';
-        }
+      visible_word[i] = word[i];
+    } 
+    else
+    {
+        visible_word[i] = '_';
     }
-    visible_word[MAX_WORD_LENGTH-1] = '\0';  // Add null terminator
+  }
+  visible_word[MAX_WORD_LENGTH-1] = '\0';  // Add null terminator
 }
 
 int setIndex(int button, char* visible_word) 
@@ -224,7 +229,7 @@ int main()
     verify_time = time(NULL);
     game_start_time = 0;
     game_start_time = time(NULL); // Store the current time as game start time
-    
+
     printf("\nWelcome to the four-letter word quiz!");
   
     while (stage == 1) 
@@ -258,15 +263,26 @@ int main()
       writeString(visible_word);
       if (verify_time >= 5) {
         if (strcmp(visible_word, puzzle.word) == 0) {
-          stage = 1;
-          printf("\nCorrect. Total time: %d seconds", total_game_time);
+          stage++;
         }
-        else {
+        else 
+        {
           verify_time = 0;
           puzzle.attempts++;
-          printf("\nIncorrent.");
+          printf("\n%s is incorrent.", visible_word);
+          printf("\nCurrent time: %d", puzzle.time);
+          printf("\nCurrent attempts: %d", puzzle.attempts);   
+          hideConsonants(puzzle.word, visible_word);
+     
         }
       }
+    }
+    int minutes = puzzle.time / 60;
+    int seconds = puzzle.time - minutes*60;
+    printf("\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
+    puzzle.category, puzzle.word, puzzle.attempts, minutes, seconds);
+    while (stage == 4) {
+      writeString("YES!");
     }
   }
 

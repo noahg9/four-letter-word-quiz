@@ -15,8 +15,8 @@ const uint8_t ALPHABET_MAP[] = {0x88, 0x83, 0xC6, 0xA1, 0x86, 0x8E, 0xC2, 0x89, 
                                 0xC1, 0xD5, 0x89, 0x91, 0xA4};
 // Vowels in alphabetical order
 const int VOWEL_MAP[] = {0x88, 0x86, 0xCF, 0xC0, 0xC1};
-// Full stop(.), Question mark(?), Underscore(_)
-const int SYMBOL_MAP[] = {0x7F, 0XAC, 0xF7};
+// ".", "?", "_", "!"
+const int SYMBOL_MAP[] = {0x7F, 0XAC, 0xF7, 0x79};
 
 
 void initDisplay() {
@@ -108,6 +108,10 @@ void writeCharToSegment(uint8_t segment, char character) {
   else if (character == '_')
   {
     value = SYMBOL_MAP[2]; // Get value from SYMBOL_MAP for "_"
+  }
+  else if (character == '!')
+  {
+    value = SYMBOL_MAP[3]; // Get value from SYMBOL_MAP for "!"
   }
   else {
     value = SPACE;

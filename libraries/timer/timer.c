@@ -28,7 +28,7 @@ void stopTimer0() {
 void initTimer1()
 {
      // Set timer 1 to CTC mode
-    TCCR1A |= _BV(WGM12);
+    TCCR1B |= _BV(WGM12);
 
     // Set prescaler to 1024
     TCCR1B |= _BV(CS12) | _BV(CS10);
