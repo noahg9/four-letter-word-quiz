@@ -207,6 +207,17 @@ void incorrectSound()
 
 void setup()
 {
+  button_pressed = 0;
+  cat_selected = 0;
+  game_active = 0;
+  game_won = 0;
+  cat_id = 0;
+  verify_time = 0;
+}
+
+int main() 
+{
+  
   initUSART();
   initDisplay();
   initADC();
@@ -221,16 +232,6 @@ void setup()
   initTimer0();
   initTimer1();
 
-  button_pressed = 0;
-  cat_selected = 0;
-  game_active = 0;
-  game_won = 0;
-  cat_id = 0;
-  verify_time = time(NULL);
-}
-
-int main() 
-{
   while (1)
   {
     setup();  
