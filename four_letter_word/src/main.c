@@ -37,7 +37,10 @@ uint16_t adc_value = 0;
 volatile int seed_time = 0;
 volatile int verify_time = 0;
 volatile int seed_set = 0;
-volatile int game_started = 0;
+volatile int button_pressed = 0;
+volatile int cat_selected = 0;
+volatile int game_active = 0;
+volatile int game_won = 0;
 
 PUZZLE puzzle;
 
@@ -68,7 +71,7 @@ ISR(TIMER0_COMPA_vect)
 
 ISR(TIMER1_COMPA_vect)
 {
-  if (game_started)
+  if (game_active)
   {
     puzzle.time++;  // Increment game time (seconds)
     verify_time++;  // Increment verify time (seconds)
@@ -77,14 +80,14 @@ ISR(TIMER1_COMPA_vect)
 
 ISR( PCINT1_vect )
 {
-  if (stage == 1) {
+  if (!button_pressed) {
     if (buttonPushed(1))
     {
-      stage++;
+      button_pressed = 1;
       _delay_ms(500);
     }
-  }
-  if (stage == 2) {
+  } else
+  if (!cat_selected) {
     if (buttonPushed(1))
     {
       cat_id++;
@@ -96,12 +99,12 @@ ISR( PCINT1_vect )
     }
     if (buttonPushed(2))
     {
-      stage++;
+      cat_selected = 1;
       _delay_ms(500);
-      game_started = 1; // Activates ISR for timer 1
+      game_active = 1; // Activates ISR for timer 1 and buttons for game
     }
-  }
-  if (stage == 3) {
+  } else
+  if (game_active) {
     if (buttonPushed(1)) 
     {
       nextChar(button1_index, visible_word);
@@ -126,10 +129,11 @@ ISR( PCINT1_vect )
       lightDownOneLed(button3_index);
       _delay_ms(500);    
     }
-  }
-  if (stage == 4) {
+  } else
+  if (game_won) {
     if (buttonPushed(1)) {
-      stage = 1;
+      game_won = 0;
+      _delay_ms(500);
     }
   }
 }
@@ -198,7 +202,7 @@ void correctSound()
 void incorrectSound() 
 {
   enableBuzzer();
-  playTone(C6, 1000);
+  playTone(C5, 1000);
 }
 
 void setup()
@@ -209,26 +213,32 @@ void setup()
   enableAllLeds();
   lightUpAllLeds();
   enableAllButtons();
-  stage = 1;
+
   PCICR |= _BV( PCIE1 );
   PCMSK1 |= _BV( PC1 ) | _BV( PC2 ) | _BV( PC3 );
   sei();
+
   initTimer0();
   initTimer1();
+
+  button_pressed = 0;
+  cat_selected = 0;
+  game_active = 0;
+  game_won = 0;
+  cat_id = 0;
+  verify_time = time(NULL);
 }
 
 int main() 
 {
-  setup();  
   while (1)
   {
-    cat_id = 0;
-    verify_time = time(NULL);
+    setup();  
 
     printf("\nWelcome to the four-letter word quiz.");
     printf("\nButton 1 - Begin");
   
-    while (stage == 1) 
+    while (!button_pressed) 
     {
       writeString("CAT?");
     }
@@ -240,12 +250,12 @@ int main()
     printf("\nCategories:");
     printf("\n- Animal (ANML)");
     printf("\n- Human (HMAN)");
-    printf("\n- Country (ANML)");
-    printf("\n- Thing (ANML)");
+    printf("\n- Country (CTRY)");
+    printf("\n- Thing (THNG)");
     printf("\n- Football club (CLUB)");
     printf("\n- Company (COMP)");
 
-    while (stage == 2)
+    while (!cat_selected)
     {
       writeString(categories[cat_id]);
     }
@@ -265,13 +275,13 @@ int main()
     printf("\nButton 2 - Edit second underscore (if exists)");
     printf("\nButton 3 - Edit third underscore (if exists)");
 
-    while (stage == 3) 
+    while (game_active) 
     {
       writeString(visible_word);
       if (verify_time >= 60) {
         if (strcmp(visible_word, puzzle.word) == 0) {
-          stage++;
-          correctSound();
+          game_active = 0;
+          game_won = 1;
         }
         else 
         {
@@ -279,7 +289,7 @@ int main()
           puzzle.attempts++;
           incorrectSound();
           printf("\n%s is incorrent.", visible_word);
-          printf("\nCurrent time: %d", puzzle.time);
+          printf("\nCurrent time: %d seconds", puzzle.time);
           printf("\nCurrent attempts: %d", puzzle.attempts);   
           hideConsonants(puzzle.word, visible_word);
         }
@@ -290,8 +300,9 @@ int main()
     printf("\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
     puzzle.category, puzzle.word, puzzle.attempts, minutes, seconds);
     printf("\nButton 1 - Play again");
+    correctSound();
     
-    while (stage == 4) {
+    while (game_won) {
       writeString("YES!");
     }
   }
