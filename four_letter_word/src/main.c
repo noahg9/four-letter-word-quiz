@@ -71,7 +71,11 @@ ISR(TIMER1_COMPA_vect)
   if (game_active)
   {
     puzzle.time++;  // Increment game time (seconds)
-    verify_time++;  // Increment verify time (seconds)
+    if (verify_time < 60)
+    {
+      verify_time++;  // Increment verify time (seconds)
+    }
+    dimAllLeds(100-(verify_time*(10/6)), 1);
   }
 }
 
@@ -82,6 +86,7 @@ ISR( PCINT1_vect )
     {
       button_pressed = 1;
       _delay_ms(500);
+      lightUpAllLeds();
     }
   } else
   if (!cat_selected) {
@@ -235,7 +240,6 @@ void setup() {
   initDisplay();
   initADC();
   enableAllLeds();
-  lightUpAllLeds();
   enableAllButtons();
 
   PCICR |= _BV( PCIE1 );
@@ -254,6 +258,7 @@ void reset()
   game_won = 0;
   cat_id = 0;
   verify_time = 0;
+  lightDownAllLeds();
 }
 
 void start()
