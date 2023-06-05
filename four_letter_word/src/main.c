@@ -13,20 +13,20 @@
 #include <buzzer.h>
 
 // Constants
-#define MAX_CATEGORIES 6
-#define MAX_WORDS 28
-#define MAX_CATEGORY_LENGTH 5
-#define MAX_WORD_LENGTH 5
+#define CATEGORY_AMOUNT 6
+#define WORD_AMOUNT 28
+#define CATEGORY_LENGTH 5
+#define WORD_LENGTH 5
 
 typedef struct {
-  char category[MAX_CATEGORY_LENGTH];
-  char word[MAX_WORD_LENGTH];
+  char category[CATEGORY_LENGTH];
+  char word[WORD_LENGTH];
   int attempts;
   int time;
 } PUZZLE;
 
 int cat_id;
-char visible_word[MAX_WORD_LENGTH];
+char visible_word[WORD_LENGTH];
 int button1_index;
 int button2_index;
 int button3_index;
@@ -38,14 +38,13 @@ int button_pressed;
 int cat_selected;
 int game_active;
 int game_won;
-
 PUZZLE *puzzle;
 
 // Array of categories as string
-char categories[MAX_CATEGORIES][MAX_CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG", "CLUB", "COMP"};
+char categories[CATEGORY_AMOUNT][CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG", "CLUB", "COMP"};
 
 // Array of 6 category arrays with 28 words each
-char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
+char words[CATEGORY_AMOUNT][WORD_AMOUNT][WORD_LENGTH] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
   "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
   {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH",
@@ -81,21 +80,23 @@ ISR(TIMER1_COMPA_vect)
   }
 }
 
-ISR( PCINT1_vect )
+ISR( PCINT1_vect )  // Actions associated with each button for different conditions
 {
-  if (!button_pressed) {
+  if (!button_pressed)
+  {
     if (buttonPushed(1))
     {
       button_pressed = 1;
       _delay_ms(500);
     }
   } else
-  if (!cat_selected) {
+  if (!cat_selected)
+  {
     if (buttonPushed(1))
     {
       cat_id++;
       _delay_ms(500);
-      if (cat_id == MAX_CATEGORIES) 
+      if (cat_id == CATEGORY_AMOUNT) 
       {
         cat_id = 0;
       }
@@ -108,7 +109,8 @@ ISR( PCINT1_vect )
       game_active = 1; // Activates ISR for timer 1 and buttons for game
     }
   } else
-  if (game_active) {
+  if (game_active)  // Increment letters during the game
+  {  
     if (buttonPushed(1)) 
     {
       nextChar(button1_index, visible_word);
@@ -134,68 +136,58 @@ ISR( PCINT1_vect )
       _delay_ms(500);    
     }
   } else
-  if (game_won) {
-    if (buttonPushed(1)) {
+  if (game_won)
+  {
+    if (buttonPushed(1))
+    {
       game_won = 0;
       _delay_ms(500);
     }
   }
 }
 
-ISR(ADC_vect)
+ISR(ADC_vect) // Potentiometer (unused)
 {
   adc_value = ADC;
 }
 
 void initTimer0() {
-  // Set timer 0 to CTC mode
-  TCCR0A |= _BV(WGM01);
-
-  // Set prescaler to 64
-  TCCR0B |= _BV(CS01) | _BV(CS00);
-
+  TCCR0A |= _BV(WGM01); // Set timer 0 to CTC mode
+  TCCR0B |= _BV(CS01) | _BV(CS00);  // Set prescaler to 64
   // Set compare match register to generate interrupt every 1 millisecond
   OCR0A = 249; // Assuming a 16MHz clock and prescaler of 64 (16,000,000 / 64 / 1000 - 1)
-
-  // Enable compare match A interrupt
-  TIMSK0 |= _BV(OCIE0A);
+  TIMSK0 |= _BV(OCIE0A);  // Enable compare match A interrupt
 }
 
 void initTimer1()
 {
-    // Set timer 1 to CTC mode
-  TCCR1B |= _BV(WGM12);
-
-  // Set prescaler to 1024
-  TCCR1B |= _BV(CS12) | _BV(CS10);
-
+  TCCR1B |= _BV(WGM12); // Set timer 1 to CTC mode
+  TCCR1B |= _BV(CS12) | _BV(CS10);  // Set prescaler to 1024
   OCR1A = 15624; // Set OCR0A for 1-second interval
-
-  // Enable compare match A interrupt
-  TIMSK1 |= _BV(OCIE1A);
+  TIMSK1 |= _BV(OCIE1A);  // Enable compare match A interrupt
 }
 
-void hideConsonants(const char *word, char *visible_word) 
+void hideConsonants(const char *word, char *visible_word) // Set variable as copy of word with consonants replaced with underscores
 {
-  for (int i = 0; i < MAX_WORD_LENGTH-1; i++) 
+  for (int i = 0; i < WORD_LENGTH-1; i++) // Loop through each letter
   {
     if (word[i] == 'A' || word[i] == 'E' || word[i] == 'I' || word[i] == 'O' 
-    || word[i] == 'U' || word[i] == visible_word[i])
+    || word[i] == 'U' || word[i] == visible_word[i])  // If index is vowel
     {
-      visible_word[i] = word[i];
+      visible_word[i] = word[i];  // Set index the same as the word
     } 
-    else
+    else  // If index is consonant
     {
-        visible_word[i] = '_';
+        visible_word[i] = '_';  // Set underscore on the index
     }
   }
-  visible_word[MAX_WORD_LENGTH-1] = '\0'; // Add null terminator
+  visible_word[WORD_LENGTH-1] = '\0'; // Add null terminator
 }
 
-int setIndex(int button, char* visible_word) 
+int setIndex(int button, char* visible_word)  // Set index of letter to be controlled by each button
 {
   int cons_count = 0;
-  for (int i = 0; i < MAX_WORD_LENGTH-1; i++) 
+  for (int i = 0; i < WORD_LENGTH-1; i++) 
   {
     if (visible_word[i] == '_') 
     {
@@ -206,24 +198,24 @@ int setIndex(int button, char* visible_word)
       return i;
     }
   }
-  return MAX_WORD_LENGTH-1;
+  return WORD_LENGTH-1; // Make button unusable if there are no consonants left
 }
 
-void nextChar(int index, char *visible_word) 
+void nextChar(int index, char *visible_word)  // Set next character on display
 {
-  if (visible_word[index] == '_' || visible_word[index] == 'Z') 
+  if (visible_word[index] == '_' || visible_word[index] == 'Z') // Loop through alphabet beginning at A
   {
     visible_word[index] = 'A';
   }
   else {
-    visible_word[index] = visible_word[index] + 1;
+    visible_word[index] = visible_word[index] + 1;  // Increment character
   }
 }
 
 void correctSound() 
 {
   enableBuzzer();
-  float frequencies[] = { C5, D5, E5, F5, G5, A5, B5, C6 };
+  float frequencies[] = {C5, D5, E5, F5, G5, A5, B5, C6};
   for ( int note = 0; note < 8; note++ )
   {
     playTone( frequencies[note], 150 );
@@ -237,22 +229,20 @@ void incorrectSound()
   playTone(C5, 1000);
 }
 
-void setup() {
+void setup() {  // Initialize all necessary features when program is run
   initUSART();
   initDisplay();
   initADC();
   enableAllLeds();
   enableAllButtons();
-
+  initTimer0();
+  initTimer1();
   PCICR |= _BV( PCIE1 );
   PCMSK1 |= _BV( PC1 ) | _BV( PC2 ) | _BV( PC3 );
   sei();
-
-  initTimer0();
-  initTimer1();
 }
 
-void reset()
+void reset()  // Reset before starting a new game which allows playing multiple games in one session
 {
   button_pressed = 0;
   cat_selected = 0;
@@ -269,6 +259,7 @@ void start()
 {
   reset();
 
+  // Using array to avoid using multiple printf statements for efficient memory usage
   char start_print[] = "\n\nWelcome to the four-letter word quiz."
   "\nButton 1 - Begin";
   printf("%s", start_print);
@@ -281,8 +272,9 @@ void start()
 
 void catSelection()
 {
-  srand(seed_time); // Set random with seed as the milliseconds until button 1 is pressed
+  srand(seed_time); // Set seed as milliseconds elapsed before button 1 is pressed at start
 
+  // Using array to avoid using multiple printf statements for efficient memory usage
   char cat_print[] = "\n\nButton 1 - Next category"
   "\nButton 2 - Select current category"
   "\nCategories:"
@@ -302,7 +294,7 @@ void catSelection()
   puzzle = malloc(sizeof(PUZZLE));
 
   strcpy(puzzle->category, categories[cat_id]);
-  strcpy(puzzle->word, words[cat_id][rand() % MAX_WORDS]);
+  strcpy(puzzle->word, words[cat_id][rand() % WORD_AMOUNT]);
   puzzle->attempts = 0;
   puzzle->time = 0;
 
@@ -315,6 +307,7 @@ void catSelection()
 
 void game()
 {
+  // Using array to avoid using multiple printf statements for efficient memory usage
   char game_print[] = "\n\nButton 1 - Edit first underscore"
   "\nButton 2 - Edit second underscore (if exists)"
   "\nButton 3 - Edit third underscore (if exists)";
@@ -323,17 +316,19 @@ void game()
   while (game_active) 
   {
     writeString(visible_word);
-    if (verify_time >= 60) {
-      if (strcmp(visible_word, puzzle->word) == 0) {
-        game_active = 0;
+    if (verify_time >= 60)  // When no button has been pressed for a minute
+    {
+      if (strcmp(visible_word, puzzle->word) == 0)  // If the guess matches the word
+      {
+        game_active = 0;  // Ends game
         game_won = 1;
       }
-      else 
+      else  // If the guess does not match the word
       {
-        verify_time = 0;
+        verify_time = 0;  // Resets timer
         puzzle->attempts++;
         incorrectSound();
-        hideConsonants(puzzle->word, visible_word);
+        hideConsonants(puzzle->word, visible_word); // Resets only the incorrect letters
       }
     }
   }
