@@ -2,9 +2,7 @@ Four Letter Word Quiz
 
 Noah Guerin
 
-
 My portfolio on GitLab contains one folder for my project "four_letter_word", one folder for my libraries "libraries", and five other folders for the exercises I completed.
-
 
 The project I was given was the 'Four-Letter Word Quiz'. I managed to complete all the requirements and expansions. The game is played just as it is explained on Canvas.
 
