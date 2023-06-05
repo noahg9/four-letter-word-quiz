@@ -32,7 +32,7 @@ int button1_index;
 int button2_index;
 int button3_index;
 int seed_time;
-int verify_time;
+int confirm_time;
 int seed_set;
 int button_pressed;
 int cat_selected;
@@ -73,9 +73,10 @@ ISR(TIMER1_COMPA_vect)
   if (game_active)  // While game is active
   {
     riddle->time++;  // Increment game time (seconds)
-    if (verify_time < 60)
+
+    if (confirm_time < 60)
     {
-      verify_time++;  // Increment timer to verify word (seconds)
+      confirm_time++;  // Increment timer to confirm word (seconds)
     }
   }
 }
@@ -116,7 +117,7 @@ ISR( PCINT1_vect )  // Actions associated with each button for different conditi
     if (buttonPushed(1)) 
     {
       nextChar(button1_index, visible_word);  // Increment first consonant
-      verify_time = 0;  // Reset 1-minute timer
+      confirm_time = 0;  // Reset 1-minute timer
       lightUpAllLeds();
       lightDownOneLed(button1_index); // Turn off led in same position of index incremented
       _delay_ms(500);
@@ -124,7 +125,7 @@ ISR( PCINT1_vect )  // Actions associated with each button for different conditi
     if (buttonPushed(2) && button2_index != 4)
     {
       nextChar(button2_index, visible_word);  // Increment second consonant (if exists)
-      verify_time = 0;
+      confirm_time = 0;
       lightUpAllLeds();
       lightDownOneLed(button2_index);
       _delay_ms(500);
@@ -132,7 +133,7 @@ ISR( PCINT1_vect )  // Actions associated with each button for different conditi
     if (buttonPushed(3) && button3_index != 4)
     {
       nextChar(button3_index, visible_word);  // Increment third consonant (if exists)
-      verify_time = 0;
+      confirm_time = 0;
       lightUpAllLeds();
       lightDownOneLed(button3_index);
       _delay_ms(500);    
@@ -149,21 +150,20 @@ ISR( PCINT1_vect )  // Actions associated with each button for different conditi
   }
 }
 
-void initTimer0()
+void initTimer0() // For time before button 1 is pressed
 {
-  TCCR0A |= _BV(WGM01); // Set timer 0 to CTC mode
-  TCCR0B |= _BV(CS01) | _BV(CS00);  // Set prescaler to 64
-  // Set compare match register to generate interrupt every 1 millisecond
-  OCR0A = 249; // Assuming a 16MHz clock and prescaler of 64 (16,000,000 / 64 / 1000 - 1)
-  TIMSK0 |= _BV(OCIE0A);  // Enable compare match A interrupt
+  TCCR0A |= _BV(WGM01);
+  TCCR0B |= _BV(CS01) | _BV(CS00);
+  OCR0A = 249;
+  TIMSK0 |= _BV(OCIE0A);
 }
 
-void initTimer1()
+void initTimer1() // For game time and word confirmation timer
 {
-  TCCR1B |= _BV(WGM12); // Set timer 1 to CTC mode
-  TCCR1B |= _BV(CS12) | _BV(CS10);  // Set prescaler to 1024
-  OCR1A = 15624; // Set OCR0A for 1-second interval
-  TIMSK1 |= _BV(OCIE1A);  // Enable compare match A interrupt
+  TCCR1B |= _BV(WGM12);
+  TCCR1B |= _BV(CS12) | _BV(CS10); 
+  OCR1A = 15624;
+  TIMSK1 |= _BV(OCIE1A);
 }
 
 void hideConsonants(const char *word, char *visible_word) // Set variable as copy of word with consonants replaced with underscores
@@ -249,7 +249,7 @@ void reset()  // Reset before starting a new game which allows playing multiple 
   game_active = 0;
   game_won = 0;
   cat_id = 0;
-  verify_time = 0;
+  confirm_time = 0;
   lightDownAllLeds();
   free(riddle); // Free dynamically allocated memory for riddle struct
   riddle = NULL;
@@ -321,7 +321,7 @@ void game()
   while (game_active) // Game loop
   {
     writeString(visible_word);
-    if (verify_time >= 60)  // When no button has been pressed for a minute
+    if (confirm_time >= 60)  // When no button has been pressed for a minute
     {
       if (strcmp(visible_word, riddle->word) == 0)  // If the guess matches the word
       {
@@ -330,7 +330,7 @@ void game()
       }
       else  // If the guess does not match the word
       {
-        verify_time = 0;  // Resets timer
+        confirm_time = 0;  // Resets timer
         riddle->attempts++; // Increments number of attempts
         incorrectSound();
         hideConsonants(riddle->word, visible_word); // Resets only the incorrect letters
