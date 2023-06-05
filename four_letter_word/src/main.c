@@ -9,7 +9,6 @@
 #include <led.h>
 #include <display.h>
 #include <button.h>
-#include <potentio.h>
 #include <buzzer.h>
 
 // Constants
@@ -18,6 +17,7 @@
 #define CATEGORY_LENGTH 5
 #define WORD_LENGTH 5
 
+// PUZZLE struct
 typedef struct {
   char category[CATEGORY_LENGTH];
   char word[WORD_LENGTH];
@@ -25,12 +25,12 @@ typedef struct {
   int time;
 } PUZZLE;
 
+// Global variables
 int cat_id;
 char visible_word[WORD_LENGTH];
 int button1_index;
 int button2_index;
 int button3_index;
-uint16_t adc_value = 0;
 int seed_time;
 int verify_time;
 int seed_set;
@@ -38,7 +38,7 @@ int button_pressed;
 int cat_selected;
 int game_active;
 int game_won;
-PUZZLE *puzzle;
+PUZZLE *riddle; // Declared dynamically
 
 // Array of categories as string
 char categories[CATEGORY_AMOUNT][CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG", "CLUB", "COMP"};
@@ -46,23 +46,23 @@ char categories[CATEGORY_AMOUNT][CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "TH
 // Array of 6 category arrays with 28 words each
 char words[CATEGORY_AMOUNT][WORD_AMOUNT][WORD_LENGTH] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
-  "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
+  "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},  // Animal
   {"PAUL", "GREG", "MARY", "MARC", "KATY", "NOAH", "JAKE", "ALEX", "CODY", "JANE", "OTIS", "MAYA", "LEAH", "JOSH",
-  "LIAM", "EMMA", "KATE", "LUNA", "JACK", "OWEN", "JOHN", "LUKE", "ELLA", "LILY", "RYAN", "ADAM", "ANNA", "ELLA"},
+  "LIAM", "EMMA", "KATE", "LUNA", "JACK", "OWEN", "JOHN", "LUKE", "ELLA", "LILY", "RYAN", "ADAM", "ANNA", "ELLA"},  // Human
   {"IRAN", "PERU", "CUBA", "CHAD", "FIJI", "LAOS", "TOGO", "IRAQ", "BELG", "ENGL", "IREL", "NETH", "DENM", "SWED",
-  "NORW", "FINL", "GERM", "FRAN", "SPAI", "PORT", "ITAL", "MEXI", "CANA", "POLA", "BRAZ", "ARGE", "JAPA", "PHIL"},
+  "NORW", "FINL", "GERM", "FRAN", "SPAI", "PORT", "ITAL", "MEXI", "CANA", "POLA", "BRAZ", "ARGE", "JAPA", "PHIL"},  // Country
   {"BOOK", "BALL", "DESK", "DOOR", "FORK", "LAMP", "SHOE", "RING", "COMB", "SOAP", "PIPE", "VASE", "COIN", "FLAG",
-  "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"},
+  "HOOK", "OVEN", "BELL", "NOTE", "WIRE", "BIKE", "SUIT", "SOCK", "TOOL", "ROAD", "FILE", "TILE", "BOMB", "SEED"},  // Thing
   {"CHEL", "MANU", "MANC", "ARSE", "TOTT", "LIVE", "EVER", "BARC", "REAL", "ATLE", "BAYE", "DORT", "JUVE", "MILA",
-  "INTE", "VALE", "ANDE", "ANTW", "AJAX", "NAPO", "FENE", "GALA", "BESI", "SEVI", "ROMA", "LAZI", "BURN", "BRUG"},
+  "INTE", "VALE", "ANDE", "ANTW", "AJAX", "NAPO", "FENE", "GALA", "BESI", "SEVI", "ROMA", "LAZI", "BURN", "BRUG"},  // Football club
   {"NIKE", "APPL", "MICR", "ADID", "TESL", "META", "VERS", "AMAZ", "GUCC", "ANDR", "LENO", "SAMS", "WALM", "VISA",
-  "FORD", "NETF", "INTE", "ALPH", "TOYO", "MCDO", "JPMO", "PFIZ", "DISN", "UBER", "AIRB", "SONY", "HOND", "CISC"}
+  "FORD", "NETF", "INTE", "ALPH", "TOYO", "MCDO", "JPMO", "PFIZ", "DISN", "UBER", "AIRB", "SONY", "HOND", "CISC"}   // Company
 };
 
 // Runs every time TCNT0 equals the value in the OCRA register (249)
 ISR(TIMER0_COMPA_vect)
 {
-  if (!seed_set)  // While no seed yet
+  if (!seed_set)  // While no seed is set to srand
   {
     seed_time++;  // Increment seed time (milliseconds)
   }
@@ -72,7 +72,7 @@ ISR(TIMER1_COMPA_vect)
 {
   if (game_active)  // While game is active
   {
-    puzzle->time++;  // Increment game time (seconds)
+    riddle->time++;  // Increment game time (seconds)
     if (verify_time < 60)
     {
       verify_time++;  // Increment timer to verify word (seconds)
@@ -82,21 +82,22 @@ ISR(TIMER1_COMPA_vect)
 
 ISR( PCINT1_vect )  // Actions associated with each button for different conditions
 {
-  if (!button_pressed)
+  if (!button_pressed)  // Until button 1 is first pressed
   {
     if (buttonPushed(1))
     {
       button_pressed = 1;
       _delay_ms(500);
     }
-  } else
-  if (!cat_selected)
+  } 
+
+  else if (!cat_selected)  // Until category has been selected
   {
     if (buttonPushed(1))
     {
-      cat_id++;
+      cat_id++; // Get next category
       _delay_ms(500);
-      if (cat_id == CATEGORY_AMOUNT) 
+      if (cat_id == CATEGORY_AMOUNT)  // Loop through categories
       {
         cat_id = 0;
       }
@@ -108,35 +109,37 @@ ISR( PCINT1_vect )  // Actions associated with each button for different conditi
       lightUpAllLeds();
       game_active = 1; // Activates ISR for timer 1 and buttons for game
     }
-  } else
-  if (game_active)  // Increment letters during the game
+  } 
+
+  else if (game_active)  // While game is being played
   {  
     if (buttonPushed(1)) 
     {
-      nextChar(button1_index, visible_word);
-      verify_time = 0;
+      nextChar(button1_index, visible_word);  // Increment first consonant
+      verify_time = 0;  // Reset 1-minute timer
       lightUpAllLeds();
-      lightDownOneLed(button1_index);
+      lightDownOneLed(button1_index); // Turn off led in same position of index incremented
       _delay_ms(500);
     } 
-    if (buttonPushed(2) && button2_index != 4) 
+    if (buttonPushed(2) && button2_index != 4)
     {
-      nextChar(button2_index, visible_word);
+      nextChar(button2_index, visible_word);  // Increment second consonant (if exists)
       verify_time = 0;
       lightUpAllLeds();
       lightDownOneLed(button2_index);
       _delay_ms(500);
     }
-    if (buttonPushed(3) && button3_index != 4) 
+    if (buttonPushed(3) && button3_index != 4)
     {
-      nextChar(button3_index, visible_word);
+      nextChar(button3_index, visible_word);  // Increment third consonant (if exists)
       verify_time = 0;
       lightUpAllLeds();
       lightDownOneLed(button3_index);
       _delay_ms(500);    
     }
-  } else
-  if (game_won)
+  } 
+
+  else if (game_won) // After game has been won and until button 1 is pressed
   {
     if (buttonPushed(1))
     {
@@ -146,12 +149,8 @@ ISR( PCINT1_vect )  // Actions associated with each button for different conditi
   }
 }
 
-ISR(ADC_vect) // Potentiometer (unused)
+void initTimer0()
 {
-  adc_value = ADC;
-}
-
-void initTimer0() {
   TCCR0A |= _BV(WGM01); // Set timer 0 to CTC mode
   TCCR0B |= _BV(CS01) | _BV(CS00);  // Set prescaler to 64
   // Set compare match register to generate interrupt every 1 millisecond
@@ -207,12 +206,13 @@ void nextChar(int index, char *visible_word)  // Set next character on display
   {
     visible_word[index] = 'A';
   }
-  else {
+  else
+  {
     visible_word[index] = visible_word[index] + 1;  // Increment character
   }
 }
 
-void correctSound() 
+void correctSound()
 {
   enableBuzzer();
   float frequencies[] = {C5, D5, E5, F5, G5, A5, B5, C6};
@@ -223,23 +223,23 @@ void correctSound()
   }
  }
 
-void incorrectSound() 
+void incorrectSound()
 {
   enableBuzzer();
-  playTone(C5, 1000);
+  playTone(C5, 1000); // Long low tune
 }
 
-void setup() {  // Initialize all necessary features when program is run
+void setup()  // Initialize all necessary features when program is run
+{
   initUSART();
   initDisplay();
-  initADC();
   enableAllLeds();
   enableAllButtons();
   initTimer0();
   initTimer1();
-  PCICR |= _BV( PCIE1 );
-  PCMSK1 |= _BV( PC1 ) | _BV( PC2 ) | _BV( PC3 );
-  sei();
+  PCICR |= _BV(PCIE1);
+  PCMSK1 |= _BV(BUTTON1) | _BV(BUTTON2) | _BV(BUTTON3);
+  sei();  // Activate interrupt system globally
 }
 
 void reset()  // Reset before starting a new game which allows playing multiple games in one session
@@ -251,8 +251,8 @@ void reset()  // Reset before starting a new game which allows playing multiple 
   cat_id = 0;
   verify_time = 0;
   lightDownAllLeds();
-  free(puzzle);
-  puzzle = NULL;
+  free(riddle); // Free dynamically allocated memory for riddle struct
+  riddle = NULL;
 }
 
 void start()
@@ -260,9 +260,11 @@ void start()
   reset();
 
   // Using array to avoid using multiple printf statements for efficient memory usage
-  char start_print[] = "\n\nWelcome to the four-letter word quiz."
-  "\nButton 1 - Begin";
-  printf("%s", start_print);
+  char start_print[] = "FOUR LETTER WORD QUIZ\n"
+  "\nYou will be presented with a 4-letter word of which only the vowels are shown."
+  "\nThe aim is to guess the right word in as few attempts as possible.\n"
+  "\nButton 1 - Ready\n";
+  printf("%s", start_print);  // Output general information about the application
 
   while (!button_pressed) 
   {
@@ -275,15 +277,15 @@ void catSelection()
   srand(seed_time); // Set seed as milliseconds elapsed before button 1 is pressed at start
 
   // Using array to avoid using multiple printf statements for efficient memory usage
-  char cat_print[] = "\n\nButton 1 - Next category"
-  "\nButton 2 - Select current category"
-  "\nCategories:"
+  char cat_print[] = "\nSelect a category:"
   "\n- Animal (ANML)"
   "\n- Human (HMAN)"
   "\n- Country (CTRY)"
   "\n- Thing (THNG)"
   "\n- Football club (CLUB)"
-  "\n- Company (COMP)";
+  "\n- Company (COMP)\n"
+  "\nButton 1 - Next category"
+  "\nButton 2 - Select category\n";
   printf("%s", cat_print);
 
   while (!cat_selected)
@@ -291,15 +293,17 @@ void catSelection()
     writeString(categories[cat_id]);
   }
 
-  puzzle = malloc(sizeof(PUZZLE));
+  riddle = malloc(sizeof(PUZZLE));  // Dynamically allocate memory to the riddle struct
 
-  strcpy(puzzle->category, categories[cat_id]);
-  strcpy(puzzle->word, words[cat_id][rand() % WORD_AMOUNT]);
-  puzzle->attempts = 0;
-  puzzle->time = 0;
+  // Set values to the riddle struct fields
+  strcpy(riddle->category, categories[cat_id]);
+  strcpy(riddle->word, words[cat_id][rand() % WORD_AMOUNT]);  // Set random word of chosen category as the value of word
+  riddle->attempts = 0;
+  riddle->time = 0;
 
-  hideConsonants(puzzle->word, visible_word);
+  hideConsonants(riddle->word, visible_word);
 
+  // Allocate indexes for each button to control (index set to -1 if button is not needed)
   button1_index = setIndex(1, visible_word);
   button2_index = setIndex(2, visible_word);
   button3_index = setIndex(3, visible_word);
@@ -308,17 +312,18 @@ void catSelection()
 void game()
 {
   // Using array to avoid using multiple printf statements for efficient memory usage
-  char game_print[] = "\n\nButton 1 - Edit first underscore"
+  char game_print[] = "\nButton 1 - Edit first underscore"
   "\nButton 2 - Edit second underscore (if exists)"
-  "\nButton 3 - Edit third underscore (if exists)";
+  "\nButton 3 - Edit third underscore (if exists)"
+  "\nTo confirm the word, do not press any button for one minute.\n";
   printf("%s", game_print);
 
-  while (game_active) 
+  while (game_active) // Game loop
   {
     writeString(visible_word);
     if (verify_time >= 60)  // When no button has been pressed for a minute
     {
-      if (strcmp(visible_word, puzzle->word) == 0)  // If the guess matches the word
+      if (strcmp(visible_word, riddle->word) == 0)  // If the guess matches the word
       {
         game_active = 0;  // Ends game
         game_won = 1;
@@ -326,9 +331,9 @@ void game()
       else  // If the guess does not match the word
       {
         verify_time = 0;  // Resets timer
-        puzzle->attempts++;
+        riddle->attempts++; // Increments number of attempts
         incorrectSound();
-        hideConsonants(puzzle->word, visible_word); // Resets only the incorrect letters
+        hideConsonants(riddle->word, visible_word); // Resets only the incorrect letters
       }
     }
   }
@@ -336,16 +341,19 @@ void game()
 
 void success()
 {
-  int minutes = puzzle->time / 60;
-  int seconds = puzzle->time - minutes*60;
-  printf("\n\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
-  puzzle->category, puzzle->word, puzzle->attempts, minutes, seconds);
-  printf("\nButton 1 - Play again");
+  int minutes = riddle->time / 60;
+  int seconds = riddle->time - minutes*60;
+  printf("\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
+  riddle->category, riddle->word, riddle->attempts, minutes, seconds);  // Output game information
+  printf("\nButton 1 - Play again\n");
   correctSound();
   
-  while (game_won) {
+  while (game_won)
+  {
     writeString("YES!");
   }
+
+  printf("\n\n");
 }
 
 int main() 
@@ -360,5 +368,5 @@ int main()
     success();
   }
 
-  return 1;
+  return 0;
 }

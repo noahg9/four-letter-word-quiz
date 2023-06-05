@@ -2,10 +2,7 @@
 
 #define __DELAY_BACKWARD_COMPATIBLE__
 
-//DURATION IS IN MILLISECONDS
-#define DURATION 150
-
-//FREQUENCIES OF THE NOTES
+// Frequencies of notes
 #define C5 523.250
 #define D5 587.330
 #define E5 659.250
