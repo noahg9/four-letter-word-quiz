@@ -39,9 +39,12 @@ int cat_selected;
 int game_active;
 int game_won;
 
-PUZZLE puzzle;
+PUZZLE *puzzle;
 
+// Array of categories as string
 char categories[MAX_CATEGORIES][MAX_CATEGORY_LENGTH] = {"ANML", "HMAN", "CTRY", "THNG", "CLUB", "COMP"};
+
+// Array of 6 category arrays with 28 words each
 char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
   {"DUCK", "BEAR", "LION", "FROG", "FISH", "BIRD", "DEER", "WORM", "DOVE", "WASP", "TUNA", "PUMA", "CROW", "SWAN",
   "DODO", "FLEA", "GOAT", "CRAB", "MOLE", "TOAD", "SEAL", "GNAT", "HARE", "KIWI", "MOTH", "MULE", "SLUG", "WOLF"},
@@ -57,10 +60,10 @@ char words[MAX_CATEGORIES][MAX_WORDS][MAX_WORD_LENGTH] = {
   "FORD", "NETF", "INTE", "ALPH", "TOYO", "MCDO", "JPMO", "PFIZ", "DISN", "UBER", "AIRB", "SONY", "HOND", "CISC"}
 };
 
-// Run every time TCNT0 equals the value in the OCRA register (249)
+// Runs every time TCNT0 equals the value in the OCRA register (249)
 ISR(TIMER0_COMPA_vect)
 {
-  if (!seed_set)
+  if (!seed_set)  // While no seed yet
   {
     seed_time++;  // Increment seed time (milliseconds)
   }
@@ -68,14 +71,13 @@ ISR(TIMER0_COMPA_vect)
 
 ISR(TIMER1_COMPA_vect)
 {
-  if (game_active)
+  if (game_active)  // While game is active
   {
-    puzzle.time++;  // Increment game time (seconds)
+    puzzle->time++;  // Increment game time (seconds)
     if (verify_time < 60)
     {
-      verify_time++;  // Increment verify time (seconds)
+      verify_time++;  // Increment timer to verify word (seconds)
     }
-    dimAllLeds(100-(verify_time*(10/6)), 1);
   }
 }
 
@@ -86,7 +88,6 @@ ISR( PCINT1_vect )
     {
       button_pressed = 1;
       _delay_ms(500);
-      lightUpAllLeds();
     }
   } else
   if (!cat_selected) {
@@ -102,7 +103,8 @@ ISR( PCINT1_vect )
     if (buttonPushed(2))
     {
       cat_selected = 1;
-      _delay_ms(500);
+      fadeInAllLeds(1000);
+      lightUpAllLeds();
       game_active = 1; // Activates ISR for timer 1 and buttons for game
     }
   } else
@@ -259,14 +261,17 @@ void reset()
   cat_id = 0;
   verify_time = 0;
   lightDownAllLeds();
+  free(puzzle);
+  puzzle = NULL;
 }
 
 void start()
 {
   reset();
 
-  printf("\n\nWelcome to the four-letter word quiz.");
-  printf("\nButton 1 - Begin");
+  char start_print[] = "\n\nWelcome to the four-letter word quiz."
+  "\nButton 1 - Begin";
+  printf("%s", start_print);
 
   while (!button_pressed) 
   {
@@ -278,27 +283,30 @@ void catSelection()
 {
   srand(seed_time); // Set random with seed as the milliseconds until button 1 is pressed
 
-  printf("\n\nButton 1 - Next category");
-  printf("\nButton 2 - Select current category");
-  printf("\nCategories:");
-  printf("\n- Animal (ANML)");
-  printf("\n- Human (HMAN)");
-  printf("\n- Country (CTRY)");
-  printf("\n- Thing (THNG)");
-  printf("\n- Football club (CLUB)");
-  printf("\n- Company (COMP)");
+  char cat_print[] = "\n\nButton 1 - Next category"
+  "\nButton 2 - Select current category"
+  "\nCategories:"
+  "\n- Animal (ANML)"
+  "\n- Human (HMAN)"
+  "\n- Country (CTRY)"
+  "\n- Thing (THNG)"
+  "\n- Football club (CLUB)"
+  "\n- Company (COMP)";
+  printf("%s", cat_print);
 
   while (!cat_selected)
   {
     writeString(categories[cat_id]);
   }
 
-  strcpy(puzzle.category, categories[cat_id]);
-  strcpy(puzzle.word, words[cat_id][rand() % MAX_WORDS]);
-  puzzle.attempts = 0;
-  puzzle.time = 0;
+  puzzle = malloc(sizeof(PUZZLE));
 
-  hideConsonants(puzzle.word, visible_word);
+  strcpy(puzzle->category, categories[cat_id]);
+  strcpy(puzzle->word, words[cat_id][rand() % MAX_WORDS]);
+  puzzle->attempts = 0;
+  puzzle->time = 0;
+
+  hideConsonants(puzzle->word, visible_word);
 
   button1_index = setIndex(1, visible_word);
   button2_index = setIndex(2, visible_word);
@@ -307,24 +315,25 @@ void catSelection()
 
 void game()
 {
-  printf("\n\nButton 1 - Edit first underscore");
-  printf("\nButton 2 - Edit second underscore (if exists)");
-  printf("\nButton 3 - Edit third underscore (if exists)");
+  char game_print[] = "\n\nButton 1 - Edit first underscore"
+  "\nButton 2 - Edit second underscore (if exists)"
+  "\nButton 3 - Edit third underscore (if exists)";
+  printf("%s", game_print);
 
   while (game_active) 
   {
     writeString(visible_word);
     if (verify_time >= 60) {
-      if (strcmp(visible_word, puzzle.word) == 0) {
+      if (strcmp(visible_word, puzzle->word) == 0) {
         game_active = 0;
         game_won = 1;
       }
       else 
       {
         verify_time = 0;
-        puzzle.attempts++;
+        puzzle->attempts++;
         incorrectSound();
-        hideConsonants(puzzle.word, visible_word);
+        hideConsonants(puzzle->word, visible_word);
       }
     }
   }
@@ -332,10 +341,10 @@ void game()
 
 void success()
 {
-  int minutes = puzzle.time / 60;
-  int seconds = puzzle.time - minutes*60;
+  int minutes = puzzle->time / 60;
+  int seconds = puzzle->time - minutes*60;
   printf("\n\nIn category %s the word %s was guessed in %d tries and a total time of %dmin and %dsec.",
-  puzzle.category, puzzle.word, puzzle.attempts, minutes, seconds);
+  puzzle->category, puzzle->word, puzzle->attempts, minutes, seconds);
   printf("\nButton 1 - Play again");
   correctSound();
   
